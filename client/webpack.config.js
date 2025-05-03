@@ -3,7 +3,7 @@ const path = require('path');
 
 module.exports = {
   // Define the entry point where webpack starts bundling
-  entry: './client/src/index.jsx',
+  entry: './src/index.jsx',
   
   // Configure how and where webpack outputs bundles
   output: {
@@ -37,7 +37,7 @@ module.exports = {
   // Development server configuration
   devServer: {
     static: {
-      directory: path.join(__dirname, 'client/public')
+      directory: path.join(__dirname, 'public')
     },
     historyApiFallback: true, // Enables SPA routing
     port: 3000,

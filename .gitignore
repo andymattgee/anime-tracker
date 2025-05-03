@@ -8,3 +8,11 @@ dist
 .env.production.local
 .env.development
 .env.test
+
+client/node_modules/
+client/dist/
+server/node_modules/
+server/.env
+server/dist/
+server/build/
+server/coverage/
