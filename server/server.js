@@ -3,12 +3,17 @@ const cors = require('cors');
 const mongoose = require('mongoose');
 require('dotenv').config();
 
+const animeRoutes = require('./routes/animeRoutes');
+
 const app = express();
 const PORT = process.env.PORT || 5001;
 
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// Test route for anime sample
+app.use('/api/anime', animeRoutes);
 
 // Test route
 app.get('/', (req, res) => {
