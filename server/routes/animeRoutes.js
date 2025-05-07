@@ -1,32 +1,19 @@
 const express = require('express');
 const Anime = require('../models/Anime');
-const { createAnime } = require('../controllers/animeController');
+const { createAnime, getAllAnime, deleteAnime, updateAnime } = require('../controllers/animeController');
 
 const router = express.Router();
 
 // Route to create a new anime entry
 router.post('/create', createAnime);
 
-// Test route to add a sample anime
-router.get('/test-add', async (req, res) => {
-  try {
-    const sampleAnime = new Anime({
-      title: 'Fullmetal Alchemist: Brotherhood',
-      episodesWatched: 64,
-      totalEpisodes: 64,
-      status: 'Completed',
-      score: 10,
-      notes: 'One of the best anime ever.',
-      coverImage: 'https://example.com/image.jpg',
-      synopsis: 'Two brothers search for the Philosopher\'s Stone.'
-    });
+// Route to get all anime entries
+router.get('/', getAllAnime);
 
-    const savedAnime = await sampleAnime.save();
-    res.json(savedAnime);
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: 'Failed to add sample anime' });
-  }
-});
+// Route to update an anime entry
+router.put('/:id', updateAnime);
+
+// Route to delete an anime entry
+router.delete('/:id', deleteAnime);
 
 module.exports = router;

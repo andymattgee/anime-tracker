@@ -1,5 +1,6 @@
 // Import Node.js path module for handling file paths
 const path = require('path');
+const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   // Define the entry point where webpack starts bundling
@@ -34,6 +35,12 @@ module.exports = {
     extensions: ['.js', '.jsx']
   },
   
+  plugins: [
+    new HtmlWebpackPlugin({
+      template: './public/index.html'
+    })
+  ],
+  
   // Development server configuration
   devServer: {
     static: {
@@ -41,6 +48,7 @@ module.exports = {
     },
     historyApiFallback: true, // Enables SPA routing
     port: 3000,
+    hot: true,
     open: true  // Opens browser automatically
   },
   

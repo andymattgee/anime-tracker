@@ -5,9 +5,13 @@ import ReactDOM from 'react-dom/client';
 // Import our main App component
 import App from './App';
 // Import global styles
-import './styles/global.css';
+import './styles/main.css';
 
 // Create a root container for our React app using the 'root' div from index.html
 const root = ReactDOM.createRoot(document.getElementById('root'));
 // Render our App component into the root container
-root.render(<App />);
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);

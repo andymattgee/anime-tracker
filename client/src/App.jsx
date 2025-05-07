@@ -1,15 +1,28 @@
 // Import React library to use JSX
 import React from 'react';
-import AnimeForm from './components/AnimeForm';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import LandingPage from './pages/LandingPage';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import DashboardPage from './pages/DashboardPage';
+import InventoryPage from './pages/InventoryPage';
+import AddAnimePage from './pages/AddAnimePage';
+
 // Main App component that serves as the root of our React component tree
 const App = () => {
   return (
-    // Main container div
-    <div>
-      <h1>Anime & Manga Tracker</h1>
-      <p>Welcome! Start building your list.</p>
-      <AnimeForm />
-    </div>
+    <Router>
+      <div className="app">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/signup" element={<SignupPage />} />
+          <Route path="/dashboard" element={<DashboardPage />} />
+          <Route path="/inventory" element={<InventoryPage />} />
+          <Route path="/add-anime" element={<AddAnimePage />} />
+        </Routes>
+      </div>
+    </Router>
   );
 };
 

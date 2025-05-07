@@ -1,8 +1,10 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import './AnimeForm.css';
 
 const AnimeForm = () => {
+    const navigate = useNavigate();
     const [formData, setFormData] = useState({
         title: '',
         episodesWatched: 0,
@@ -43,6 +45,11 @@ const AnimeForm = () => {
                     coverImage: '',
                     synopsis: ''
                 });
+                
+                // Navigate back to inventory page after a short delay
+                setTimeout(() => {
+                    navigate('/inventory');
+                }, 1500);
             }
         } catch (err) {
             setError(err.response?.data?.message || 'An error occurred');
@@ -52,7 +59,6 @@ const AnimeForm = () => {
 
     return (
         <div className="anime-form-container">
-            <h2>Add New Anime</h2>
             {message && <div className="success-message">{message}</div>}
             {error && <div className="error-message">{error}</div>}
             
@@ -160,7 +166,16 @@ const AnimeForm = () => {
                     </div>
                 </div>
 
-                <button type="submit" className="submit-button">Add Anime</button>
+                <div className="form-actions">
+                    <button type="submit" className="submit-button">Add Anime</button>
+                    <button 
+                        type="button" 
+                        className="btn btn-secondary"
+                        onClick={() => navigate('/inventory')}
+                    >
+                        Cancel
+                    </button>
+                </div>
             </form>
         </div>
     );
