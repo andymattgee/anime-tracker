@@ -11,6 +11,7 @@ const InventoryPage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [editingAnime, setEditingAnime] = useState(null);
+  const [editingManga, setEditingManga] = useState(null);
   const [editForm, setEditForm] = useState({
     title: '',
     episodesWatched: '',
@@ -19,37 +20,70 @@ const InventoryPage = () => {
     score: '',
     notes: ''
   });
+  const [editMangaForm, setEditMangaForm] = useState({
+    title: '',
+    chaptersRead: '',
+    totalChapters: '',
+    status: '',
+    score: '',
+    notes: ''
+  });
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [activeTab]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://localhost:5001/api/anime');
-      if (!response.ok) {
-        throw new Error('Failed to fetch anime data');
-      }
-      const result = await response.json();
       
-      if (result.success) {
-        const formattedAnime = result.data.map(anime => ({
-          id: anime._id,
-          title: anime.title,
-          status: anime.status,
-          progress: `Episode ${anime.episodesWatched}/${anime.totalEpisodes}`,
-          rating: anime.score,
-          episodesWatched: anime.episodesWatched,
-          totalEpisodes: anime.totalEpisodes,
-          notes: anime.notes
-        }));
-        setAnimeList(formattedAnime);
+      if (activeTab === 'anime') {
+        const response = await fetch('http://localhost:5001/api/anime');
+        if (!response.ok) {
+          throw new Error('Failed to fetch anime data');
+        }
+        const result = await response.json();
+        
+        if (result.success) {
+          const formattedAnime = result.data.map(anime => ({
+            id: anime._id,
+            title: anime.title,
+            status: anime.status,
+            progress: `Episode ${anime.episodesWatched}/${anime.totalEpisodes}`,
+            rating: anime.score,
+            episodesWatched: anime.episodesWatched,
+            totalEpisodes: anime.totalEpisodes,
+            notes: anime.notes
+          }));
+          setAnimeList(formattedAnime);
+        } else {
+          throw new Error(result.message || 'Failed to fetch anime data');
+        }
       } else {
-        throw new Error(result.message || 'Failed to fetch anime data');
+        // Fetch manga data
+        const response = await fetch('http://localhost:5001/api/manga');
+        if (!response.ok) {
+          throw new Error('Failed to fetch manga data');
+        }
+        const result = await response.json();
+        
+        if (result.success) {
+          const formattedManga = result.data.map(manga => ({
+            id: manga._id,
+            title: manga.title,
+            status: manga.status,
+            progress: `Chapter ${manga.chaptersRead}/${manga.totalChapters}`,
+            rating: manga.score,
+            chaptersRead: manga.chaptersRead,
+            totalChapters: manga.totalChapters,
+            notes: manga.notes
+          }));
+          setMangaList(formattedManga);
+        } else {
+          throw new Error(result.message || 'Failed to fetch manga data');
+        }
       }
       
-      setMangaList([]); // Empty array for manga until implemented
       setLoading(false);
     } catch (err) {
       console.error('Error fetching data:', err);
@@ -58,7 +92,7 @@ const InventoryPage = () => {
     }
   };
 
-  const handleDelete = async (id) => {
+  const handleDeleteAnime = async (id) => {
     if (window.confirm('Are you sure you want to delete this anime entry?')) {
       try {
         const response = await fetch(`http://localhost:5001/api/anime/${id}`, {
@@ -79,7 +113,28 @@ const InventoryPage = () => {
     }
   };
 
-  const handleEdit = (anime) => {
+  const handleDeleteManga = async (id) => {
+    if (window.confirm('Are you sure you want to delete this manga entry?')) {
+      try {
+        const response = await fetch(`http://localhost:5001/api/manga/${id}`, {
+          method: 'DELETE',
+        });
+        
+        const result = await response.json();
+        
+        if (result.success) {
+          setMangaList(mangaList.filter(manga => manga.id !== id));
+        } else {
+          throw new Error(result.message || 'Failed to delete manga');
+        }
+      } catch (err) {
+        console.error('Error deleting manga:', err);
+        setError(err.message);
+      }
+    }
+  };
+
+  const handleEditAnime = (anime) => {
     setEditingAnime(anime);
     setEditForm({
       title: anime.title,
@@ -91,7 +146,19 @@ const InventoryPage = () => {
     });
   };
 
-  const handleEditSubmit = async (e) => {
+  const handleEditManga = (manga) => {
+    setEditingManga(manga);
+    setEditMangaForm({
+      title: manga.title,
+      chaptersRead: manga.chaptersRead,
+      totalChapters: manga.totalChapters,
+      status: manga.status,
+      score: manga.rating,
+      notes: manga.notes
+    });
+  };
+
+  const handleEditAnimeSubmit = async (e) => {
     e.preventDefault();
     try {
       const response = await fetch(`http://localhost:5001/api/anime/${editingAnime.id}`, {
@@ -130,7 +197,46 @@ const InventoryPage = () => {
     }
   };
 
-  const handleEditChange = (e) => {
+  const handleEditMangaSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await fetch(`http://localhost:5001/api/manga/${editingManga.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(editMangaForm),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        const updatedManga = result.data;
+        setMangaList(mangaList.map(manga => 
+          manga.id === updatedManga._id 
+            ? {
+                ...manga,
+                title: updatedManga.title,
+                status: updatedManga.status,
+                progress: `Chapter ${updatedManga.chaptersRead}/${updatedManga.totalChapters}`,
+                rating: updatedManga.score,
+                chaptersRead: updatedManga.chaptersRead,
+                totalChapters: updatedManga.totalChapters,
+                notes: updatedManga.notes
+              }
+            : manga
+        ));
+        setEditingManga(null);
+      } else {
+        throw new Error(result.message || 'Failed to update manga');
+      }
+    } catch (err) {
+      console.error('Error updating manga:', err);
+      setError(err.message);
+    }
+  };
+
+  const handleEditAnimeChange = (e) => {
     const { name, value } = e.target;
     setEditForm(prev => ({
       ...prev,
@@ -138,21 +244,29 @@ const InventoryPage = () => {
     }));
   };
 
-  const renderEditModal = () => {
+  const handleEditMangaChange = (e) => {
+    const { name, value } = e.target;
+    setEditMangaForm(prev => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const renderEditAnimeModal = () => {
     if (!editingAnime) return null;
 
     return (
       <div className="modal-overlay">
         <div className="modal-content">
           <h2>Edit Anime Entry</h2>
-          <form onSubmit={handleEditSubmit}>
+          <form onSubmit={handleEditAnimeSubmit}>
             <div className="form-group">
               <label>Title:</label>
               <input
                 type="text"
                 name="title"
                 value={editForm.title}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
                 required
               />
             </div>
@@ -162,7 +276,7 @@ const InventoryPage = () => {
                 type="number"
                 name="episodesWatched"
                 value={editForm.episodesWatched}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
                 required
               />
             </div>
@@ -172,7 +286,7 @@ const InventoryPage = () => {
                 type="number"
                 name="totalEpisodes"
                 value={editForm.totalEpisodes}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
                 required
               />
             </div>
@@ -181,7 +295,7 @@ const InventoryPage = () => {
               <select
                 name="status"
                 value={editForm.status}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
                 required
               >
                 <option value="Watching">Watching</option>
@@ -196,7 +310,7 @@ const InventoryPage = () => {
                 type="number"
                 name="score"
                 value={editForm.score}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
                 min="0"
                 max="10"
                 required
@@ -207,7 +321,7 @@ const InventoryPage = () => {
               <textarea
                 name="notes"
                 value={editForm.notes}
-                onChange={handleEditChange}
+                onChange={handleEditAnimeChange}
               />
             </div>
             <div className="modal-actions">
@@ -216,6 +330,94 @@ const InventoryPage = () => {
                 type="button" 
                 className="btn btn-secondary"
                 onClick={() => setEditingAnime(null)}
+              >
+                Cancel
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    );
+  };
+
+  const renderEditMangaModal = () => {
+    if (!editingManga) return null;
+
+    return (
+      <div className="modal-overlay">
+        <div className="modal-content">
+          <h2>Edit Manga Entry</h2>
+          <form onSubmit={handleEditMangaSubmit}>
+            <div className="form-group">
+              <label>Title:</label>
+              <input
+                type="text"
+                name="title"
+                value={editMangaForm.title}
+                onChange={handleEditMangaChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Chapters Read:</label>
+              <input
+                type="number"
+                name="chaptersRead"
+                value={editMangaForm.chaptersRead}
+                onChange={handleEditMangaChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Total Chapters:</label>
+              <input
+                type="number"
+                name="totalChapters"
+                value={editMangaForm.totalChapters}
+                onChange={handleEditMangaChange}
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Status:</label>
+              <select
+                name="status"
+                value={editMangaForm.status}
+                onChange={handleEditMangaChange}
+                required
+              >
+                <option value="Reading">Reading</option>
+                <option value="Completed">Completed</option>
+                <option value="Plan to Read">Plan to Read</option>
+                <option value="Dropped">Dropped</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Score:</label>
+              <input
+                type="number"
+                name="score"
+                value={editMangaForm.score}
+                onChange={handleEditMangaChange}
+                min="0"
+                max="10"
+                required
+              />
+            </div>
+            <div className="form-group">
+              <label>Notes:</label>
+              <textarea
+                name="notes"
+                value={editMangaForm.notes}
+                onChange={handleEditMangaChange}
+              />
+            </div>
+            <div className="modal-actions">
+              <button type="submit" className="btn btn-primary">Save Changes</button>
+              <button 
+                type="button" 
+                className="btn btn-secondary"
+                onClick={() => setEditingManga(null)}
               >
                 Cancel
               </button>
@@ -242,12 +444,19 @@ const InventoryPage = () => {
       return (
         <div className="no-data">
           <p>No {activeTab} entries found.</p>
-          {activeTab === 'anime' && (
+          {activeTab === 'anime' ? (
             <button 
               className="btn btn-primary"
               onClick={() => navigate('/add-anime')}
             >
               Add New Anime
+            </button>
+          ) : (
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/add-manga')}
+            >
+              Add New Manga
             </button>
           )}
         </div>
@@ -257,12 +466,19 @@ const InventoryPage = () => {
     return (
       <>
         <div className="inventory-header">
-          {activeTab === 'anime' && (
+          {activeTab === 'anime' ? (
             <button 
               className="btn btn-primary add-button"
               onClick={() => navigate('/add-anime')}
             >
               Add New Anime
+            </button>
+          ) : (
+            <button 
+              className="btn btn-primary add-button"
+              onClick={() => navigate('/add-manga')}
+            >
+              Add New Manga
             </button>
           )}
         </div>
@@ -278,13 +494,13 @@ const InventoryPage = () => {
               <div className="inventory-actions">
                 <button 
                   className="btn btn-primary"
-                  onClick={() => handleEdit(item)}
+                  onClick={() => activeTab === 'anime' ? handleEditAnime(item) : handleEditManga(item)}
                 >
                   Edit
                 </button>
                 <button 
                   className="btn btn-secondary"
-                  onClick={() => handleDelete(item.id)}
+                  onClick={() => activeTab === 'anime' ? handleDeleteAnime(item.id) : handleDeleteManga(item.id)}
                 >
                   Delete
                 </button>
@@ -315,7 +531,8 @@ const InventoryPage = () => {
           </button>
         </div>
         {renderContent()}
-        {renderEditModal()}
+        {renderEditAnimeModal()}
+        {renderEditMangaModal()}
       </div>
     </div>
   );

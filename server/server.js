@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const animeRoutes = require('./routes/animeRoutes');
+const mangaRoutes = require('./routes/mangaRoutes');
 
 const app = express();
 const PORT = process.env.PORT || 5001;
@@ -12,8 +13,9 @@ const PORT = process.env.PORT || 5001;
 app.use(cors());
 app.use(express.json());
 
-// Test route for anime sample
+// Routes
 app.use('/api/anime', animeRoutes);
+app.use('/api/manga', mangaRoutes);
 
 // Test route
 app.get('/', (req, res) => {

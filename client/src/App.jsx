@@ -7,6 +7,7 @@ import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
 import InventoryPage from './pages/InventoryPage';
 import AddAnimePage from './pages/AddAnimePage';
+import AddMangaPage from './pages/AddMangaPage';
 
 // Main App component that serves as the root of our React component tree
 const App = () => {
@@ -20,6 +21,7 @@ const App = () => {
           <Route path="/dashboard" element={<DashboardPage />} />
           <Route path="/inventory" element={<InventoryPage />} />
           <Route path="/add-anime" element={<AddAnimePage />} />
+          <Route path="/add-manga" element={<AddMangaPage />} />
         </Routes>
       </div>
     </Router>

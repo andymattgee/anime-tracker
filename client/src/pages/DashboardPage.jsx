@@ -40,8 +40,18 @@ const DashboardPage = () => {
         <section className="quick-actions">
           <h2>Quick Actions</h2>
           <div className="action-buttons">
-            <button className="btn btn-primary">Add New Anime</button>
-            <button className="btn btn-primary">Add New Manga</button>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/add-anime')}
+            >
+              Add New Anime
+            </button>
+            <button 
+              className="btn btn-primary"
+              onClick={() => navigate('/add-manga')}
+            >
+              Add New Manga
+            </button>
           </div>
         </section>
       </div>
