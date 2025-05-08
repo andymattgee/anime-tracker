@@ -1,0 +1,162 @@
+/* client/src/pages/ExplorePage.css */
+
+.explore-page {
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: sans-serif;
+}
+
+.explore-page h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #333;
+}
+
+.search-form {
+  margin-bottom: 30px;
+}
+
+.search-controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Spacing between elements */
+  flex-wrap: wrap; /* Allow wrapping on smaller screens */
+}
+
+.search-input {
+  padding: 10px 15px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  flex-grow: 1; /* Allow input to take available space */
+  min-width: 200px; /* Minimum width */
+}
+
+.search-type-select {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-size: 1rem;
+  background-color: white;
+}
+
+.search-button {
+  padding: 10px 20px;
+  background-color: #007bff;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.search-button:hover {
+  background-color: #0056b3;
+}
+
+.search-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.error-message {
+  color: #dc3545;
+  text-align: center;
+  margin-top: 15px;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); /* Responsive grid */
+  gap: 20px; /* Spacing between cards */
+  margin-top: 30px;
+}
+
+.result-card {
+  border: 1px solid #eee;
+  border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  background-color: #fff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.result-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.result-card a {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+}
+
+.result-card img {
+  width: 100%;
+  height: 250px; /* Fixed height for images */
+  object-fit: cover; /* Cover the area without distortion */
+  display: block;
+}
+
+.result-card h3 {
+  font-size: 1rem;
+  margin: 10px;
+  min-height: 40px; /* Ensure space for title */
+  color: #333;
+}
+
+.result-card p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 5px 10px 10px;
+}
+/* Styles for Add to Inventory button */
+.add-inventory-button {
+  display: block;
+  width: calc(100% - 20px); /* Full width minus padding */
+  margin: 10px auto 10px; /* Center button with margin */
+  padding: 8px 15px;
+  background-color: #28a745; /* Green */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: background-color 0.2s ease, opacity 0.2s ease;
+}
+
+.add-inventory-button:hover {
+  background-color: #218838; /* Darker green */
+}
+
+.add-inventory-button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.add-inventory-button.adding {
+  background-color: #ffc107; /* Yellow */
+  color: #333;
+}
+
+.add-inventory-button.added {
+  background-color: #17a2b8; /* Teal */
+}
+
+.add-inventory-button.error {
+  background-color: #dc3545; /* Red */
+}
+
+.add-error-message {
+  font-size: 0.8rem;
+  color: #dc3545; /* Red */
+  margin-top: -5px;
+  margin-bottom: 10px;
+  text-align: center;
+}

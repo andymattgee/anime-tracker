@@ -222,3 +222,93 @@
     border-bottom: 1px solid #007bff;
   }
 } 
+/* Styles for inventory card images */
+.inventory-card-image {
+  width: 100%; /* Make image take full width of card */
+  height: 200px; /* Set a fixed height */
+  object-fit: cover; /* Cover the area, cropping if necessary */
+  border-bottom: 1px solid #eee; /* Optional separator */
+  margin-bottom: 10px; /* Space below image */
+}
+
+.inventory-card h3 {
+  margin-top: 0; /* Adjust title margin if image is present */
+}
+/* --- Details Modal Styles --- */
+.details-modal .modal-content {
+  max-width: 700px; /* Wider modal for details */
+}
+
+.details-content {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start; /* Align items to the top */
+}
+
+.details-modal-image {
+  flex-shrink: 0; /* Prevent image from shrinking */
+  width: 200px; /* Fixed width for the image */
+  height: auto;
+  max-height: 300px; /* Limit image height */
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.details-text {
+  flex-grow: 1; /* Allow text section to take remaining space */
+  text-align: left;
+}
+
+.details-text h4 {
+  margin-top: 15px;
+  margin-bottom: 8px;
+  color: #0056b3; /* Accent color for headings */
+  border-bottom: 1px solid #eee;
+  padding-bottom: 4px;
+}
+
+.details-text p {
+  margin-bottom: 8px;
+  line-height: 1.5;
+  font-size: 0.95rem;
+}
+
+.details-text strong {
+  color: #333;
+}
+
+.details-text hr {
+  border: 0;
+  height: 1px;
+  background-color: #eee;
+  margin: 15px 0;
+}
+
+.details-modal .modal-actions {
+  justify-content: flex-end; /* Align close button to the right */
+}
+
+/* Style for the details button on the card */
+.inventory-actions .btn-info {
+  background-color: #17a2b8; /* Teal color */
+  border-color: #17a2b8;
+  color: white;
+}
+
+.inventory-actions .btn-info:hover {
+  background-color: #138496;
+  border-color: #117a8b;
+}
+
+/* Adjust card actions layout if needed */
+.inventory-actions {
+  display: flex;
+  gap: 5px; /* Smaller gap for more buttons */
+  flex-wrap: wrap; /* Allow buttons to wrap */
+  justify-content: center; /* Center buttons */
+}
+
+.inventory-actions .btn {
+  flex-grow: 1; /* Allow buttons to share space */
+  min-width: 70px; /* Minimum button width */
+}
