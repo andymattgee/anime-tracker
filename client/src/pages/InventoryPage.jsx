@@ -485,26 +485,12 @@ const InventoryPage = () => {
       return (
         <div className="no-data">
           <p>No {activeTab} entries found.</p>
-          <button
-            className="btn btn-primary"
-            onClick={() => navigate(isAnime ? '/add-anime' : '/add-manga')}
-          >
-            Add New {isAnime ? 'Anime' : 'Manga'}
-          </button>
         </div>
       );
     }
 
     return (
       <>
-        <div className="inventory-header">
-          <button
-            className="btn btn-primary add-button"
-            onClick={() => navigate(isAnime ? '/add-anime' : '/add-manga')}
-          >
-            Add New {isAnime ? 'Anime' : 'Manga'}
-          </button>
-        </div>
         <div className="inventory-grid">
           {list.map((item) => (
             <div key={item.id} className="inventory-card">
