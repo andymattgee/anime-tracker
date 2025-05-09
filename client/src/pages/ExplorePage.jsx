@@ -36,46 +36,65 @@ const ExplorePage = () => {
     }
   };
 
-  // Function to handle adding anime to inventory
-  const handleAddAnime = async (animeData) => {
-    const mal_id = animeData.mal_id;
+  // Function to handle adding item (anime or manga) to inventory
+  const handleAddItemToInventory = async (itemData) => {
+    const mal_id = itemData.mal_id;
     setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'adding' } }));
 
-    try {
-      // Construct payload with all required and new fields from the animeData (Jikan item)
-      const payload = {
-        mal_id: mal_id,
-        title: animeData.title,
-        totalEpisodes: animeData.episodes || null,
-        coverImage: animeData.images?.jpg?.image_url || null,
-        synopsis: animeData.synopsis || null,
-        apiStatus: animeData.status || null, // Airing status from Jikan
-        apiScore: animeData.score || null,   // Community score from Jikan
-        trailerUrl: animeData.trailer?.url || null,
-        source: animeData.source || null,
-        genres: animeData.genres?.map(g => g.name) || [], // Extract genre names
-        airedFrom: animeData.aired?.from || null,
-        airedTo: animeData.aired?.to || null,
-      };
+    // Base payload common to both anime and manga
+    let payload = {
+      mal_id: mal_id,
+      title: itemData.title,
+      coverImage: itemData.images?.jpg?.image_url || null,
+      synopsis: itemData.synopsis || null,
+      apiStatus: itemData.status || null, // Jikan's 'status' field (e.g., "Finished Airing", "Publishing")
+      apiScore: itemData.score || null,
+      source: itemData.source || null,
+      genres: itemData.genres?.map(g => g.name) || [],
+      // User-specific fields can be defaulted by the backend or passed if needed
+      // userStatus: 'Plan to Watch/Read', // Example, backend handles defaults
+      // episodesWatched: 0,
+      // chaptersRead: 0,
+      // userScore: null,
+      // userNotes: '',
+    };
 
-      const response = await axios.post('http://localhost:5001/api/search/add', payload);
+    let endpoint = '';
+
+    if (searchType === 'anime') {
+      endpoint = 'http://localhost:5001/api/anime/create';
+      payload = {
+        ...payload,
+        totalEpisodes: itemData.episodes || null,
+        trailerUrl: itemData.trailer?.url || null,
+        airedFrom: itemData.aired?.from || null,
+        airedTo: itemData.aired?.to || null,
+      };
+    } else { // manga
+      endpoint = 'http://localhost:5001/api/manga/create';
+      payload = {
+        ...payload,
+        totalChapters: itemData.chapters || null,
+        totalVolumes: itemData.volumes || null, // Jikan API provides 'volumes' for manga
+        publishedFrom: itemData.published?.from || null, // Jikan uses 'published' for manga dates
+        publishedTo: itemData.published?.to || null,
+      };
+    }
+
+    try {
+      const response = await axios.post(endpoint, payload);
 
       if (response.data.success) {
-        setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'added', message: 'Added!' } }));
-        // Optionally disable button or show success state permanently after adding
-        // setTimeout(() => {
-        //   setAddStatus(prev => ({ ...prev, [mal_id]: undefined })); // Reset status after a delay
-        // }, 2000);
+        setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'added', message: `${searchType.charAt(0).toUpperCase() + searchType.slice(1)} added!` } }));
       } else {
-        throw new Error(response.data.message || 'Failed to add anime');
+        throw new Error(response.data.message || `Failed to add ${searchType}`);
       }
     } catch (err) {
-      console.error('Error adding anime:', err);
-      setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'error', message: err.message || 'Error adding' } }));
-       // Optionally reset status after a delay
-       setTimeout(() => {
-         setAddStatus(prev => ({ ...prev, [mal_id]: undefined }));
-       }, 3000);
+      console.error(`Error adding ${searchType}:`, err);
+      setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'error', message: err.message || `Error adding ${searchType}` } }));
+      setTimeout(() => {
+        setAddStatus(prev => ({ ...prev, [mal_id]: undefined }));
+      }, 3000);
     }
   };
 
@@ -122,18 +141,17 @@ const ExplorePage = () => {
                 {item.chapters && <p>Chapters: {item.chapters}</p>}
               </a>
               {/* Add button only if it's an anime search result */}
-              {searchType === 'anime' && (
-                <button
-                  className={`add-inventory-button ${addStatus[item.mal_id]?.status || ''}`}
-                  onClick={() => handleAddAnime(item)}
-                  disabled={addStatus[item.mal_id]?.status === 'adding' || addStatus[item.mal_id]?.status === 'added'}
-                >
-                  {addStatus[item.mal_id]?.status === 'adding' ? 'Adding...' :
-                   addStatus[item.mal_id]?.status === 'added' ? 'Added ✓' :
-                   addStatus[item.mal_id]?.status === 'error' ? 'Error' :
-                   'Add to Inventory'}
-                </button>
-              )}
+              {/* Button to add item to inventory, works for both anime and manga */}
+              <button
+                className={`add-inventory-button ${addStatus[item.mal_id]?.status || ''}`}
+                onClick={() => handleAddItemToInventory(item)}
+                disabled={addStatus[item.mal_id]?.status === 'adding' || addStatus[item.mal_id]?.status === 'added'}
+              >
+                {addStatus[item.mal_id]?.status === 'adding' ? `Adding ${searchType}...` :
+                 addStatus[item.mal_id]?.status === 'added' ? `${searchType.charAt(0).toUpperCase() + searchType.slice(1)} Added ✓` :
+                 addStatus[item.mal_id]?.status === 'error' ? 'Error' :
+                 `Add ${searchType.charAt(0).toUpperCase() + searchType.slice(1)} to Inventory`}
+              </button>
                {addStatus[item.mal_id]?.status === 'error' && (
                  <p className="add-error-message">{addStatus[item.mal_id]?.message}</p>
                )}

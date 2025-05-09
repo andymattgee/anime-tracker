@@ -14,6 +14,11 @@ const DashboardPage = () => {
     <div className="dashboard-page">
       <Navbar />
       <div className="dashboard-content">
+        <section className="app-description-section" style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#e9ecef', borderRadius: '4px' }}>
+          <p style={{ fontSize: '0.9rem', color: '#495057', lineHeight: '1.6' }}>
+            This is a lightweight app using the Jikan API to pull anime and manga data, allowing users to create lists and track shows and mangas they are currently enjoying. This project serves as a practical exercise to reinforce MERN stack knowledge and to gain experience working with a third-party API in depth.
+          </p>
+        </section>
         <section className="stats-section">
           <h2>My Stats</h2>
           <div className="stats-grid">
@@ -37,14 +42,10 @@ const DashboardPage = () => {
           <p>No recent activity to show.</p>
         </section>
 
-        <section className="quick-actions">
-          <h2>Quick Actions</h2>
-          <div className="action-buttons">
-          </div>
-        </section>
+        
       </div>
     </div>
   );
 };
 
-export default DashboardPage; 
+export default DashboardPage;

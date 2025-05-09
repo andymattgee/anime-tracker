@@ -3,44 +3,65 @@ const Manga = require('../models/Manga');
 // Create a new manga entry
 exports.createManga = async (req, res) => {
     try {
-        const { 
-            title, 
-            chaptersRead, 
-            totalChapters, 
-            status, 
-            score, 
-            notes,
+        const {
+            mal_id,
+            title,
+            totalChapters,
+            totalVolumes,
             coverImage,
-            synopsis
+            synopsis,
+            apiStatus,
+            apiScore,
+            source,
+            genres,
+            publishedFrom,
+            publishedTo
+            // Note: user-specific fields like userStatus, chaptersRead, userScore, userNotes
+            // will be set to defaults here.
         } = req.body;
 
-        // Create new manga
-        const manga = new Manga({
-            title,
-            chaptersRead,
-            totalChapters,
-            status,
-            score,
-            notes,
-            coverImage,
-            synopsis
-        });
+        if (!title || !mal_id) {
+            return res.status(400).json({ success: false, message: 'Missing required manga data (title, mal_id).' });
+        }
 
-        // Save to database
+        const existingManga = await Manga.findOne({ mal_id });
+        if (existingManga) {
+            return res.status(409).json({ success: false, message: 'This manga is already in your inventory.' });
+        }
+
+        const newMangaData = {
+            // User-specific fields (defaults)
+            userStatus: req.body.userStatus || 'Plan to Read',
+            chaptersRead: req.body.chaptersRead || 0,
+            userScore: req.body.userScore || null,
+            userNotes: req.body.userNotes || '',
+
+            // Fields from Jikan API / frontend
+            mal_id: mal_id,
+            title: title,
+            totalChapters: totalChapters || null,
+            totalVolumes: totalVolumes || null,
+            coverImage: coverImage || null,
+            synopsis: synopsis || null,
+            apiStatus: apiStatus || null,
+            apiScore: apiScore || null,
+            source: source || null,
+            genres: genres || [],
+            publishedFrom: publishedFrom ? new Date(publishedFrom) : null,
+            publishedTo: publishedTo ? new Date(publishedTo) : null,
+        };
+
+        const manga = new Manga(newMangaData);
         await manga.save();
 
-        res.status(201).json({
-            success: true,
-            message: 'Manga added successfully!',
-            data: manga
-        });
+        res.status(201).json({ success: true, message: 'Manga added to inventory successfully!', data: manga });
+
     } catch (error) {
         console.error('Error creating manga:', error);
-        res.status(500).json({
-            success: false,
-            message: 'Failed to add manga',
-            error: error.message
-        });
+        if (error.code === 11000) {
+            return res.status(409).json({ success: false, message: 'This manga is already in your inventory (duplicate ID).' });
+        }
+        res.status(500).json({ success: false, message: 'Failed to add manga to inventory.', error: error.message });
     }
 };
 

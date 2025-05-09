@@ -493,7 +493,7 @@ const InventoryPage = () => {
       <>
         <div className="inventory-grid">
           {list.map((item) => (
-            <div key={item.id} className="inventory-card">
+            <div key={item.id} className="inventory-card" onClick={() => setViewingDetailsId(item.id)} style={{ cursor: 'pointer' }}>
               {item.coverImage && (
                 <img src={item.coverImage} alt={`${item.title} cover`} className="inventory-card-image" />
               )}
@@ -508,21 +508,15 @@ const InventoryPage = () => {
               <div className="inventory-actions">
                 <button
                   className="btn btn-primary"
-                  onClick={() => isAnime ? handleEditAnime(item) : handleEditManga(item)}
+                  onClick={(e) => { e.stopPropagation(); isAnime ? handleEditAnime(item) : handleEditManga(item); }}
                 >
                   Edit
                 </button>
                 <button
                   className="btn btn-secondary"
-                  onClick={() => isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id)}
+                  onClick={(e) => { e.stopPropagation(); isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id); }}
                 >
                   Delete
-                </button>
-                <button
-                  className="btn btn-info" // Use a different style for view details
-                  onClick={() => setViewingDetailsId(item.id)}
-                >
-                  Details
                 </button>
               </div>
             </div>

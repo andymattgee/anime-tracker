@@ -1,20 +1,32 @@
 const mongoose = require('mongoose');
-const Schema = mongoose.Schema;
+const { Schema } = mongoose;
 
 const mangaSchema = new Schema({
-  user: { type: Schema.Types.ObjectId, ref: 'User', required: false },  // We'll skip enforcing this for now
-  title: { type: String, required: true },
+  // User-specific tracking data
+  user: { type: Schema.Types.ObjectId, ref: 'User', required: false }, // Linked user (optional for now)
   chaptersRead: { type: Number, default: 0 },
-  totalChapters: { type: Number },
-  status: {
+  userStatus: {
     type: String,
     enum: ['Reading', 'Completed', 'Dropped', 'Plan to Read'],
-    default: 'Reading'
+    default: 'Plan to Read'
   },
-  score: { type: Number, min: 0, max: 10 },
-  notes: { type: String },
-  coverImage: { type: String },
-  synopsis: { type: String }
+  userScore: { type: Number, min: 0, max: 10, required: false },
+  userNotes: { type: String, default: '' },
+
+  // Data from Jikan API
+  mal_id: { type: Number, required: true, unique: true },
+  title: { type: String, required: true },
+  totalChapters: { type: Number, required: false },
+  totalVolumes: { type: Number, required: false },
+  coverImage: { type: String, required: false },
+  synopsis: { type: String, required: false },
+  apiStatus: { type: String, required: false }, // "Finished", "Publishing", etc.
+  apiScore: { type: Number, required: false },
+  source: { type: String, required: false }, // e.g., "Original", "Web Manga"
+  genres: [{ type: String }],
+  publishedFrom: { type: Date, required: false },
+  publishedTo: { type: Date, required: false }
+
 }, { timestamps: true });
 
 module.exports = mongoose.model('Manga', mangaSchema);
