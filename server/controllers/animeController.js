@@ -115,7 +115,15 @@ const deleteAnime = async (req, res) => {
 const updateAnime = async (req, res) => {
     try {
         const { id } = req.params;
-        const updateData = req.body;
+        const { episodesWatched, userStatus, userScore, userNotes } = req.body;
+        
+        // Only allow updating user-specific fields
+        const updateData = {
+            ...(episodesWatched !== undefined && { episodesWatched }),
+            ...(userStatus !== undefined && { userStatus }),
+            ...(userScore !== undefined && { userScore }),
+            ...(userNotes !== undefined && { userNotes }),
+        };
 
         const updatedAnime = await Anime.findByIdAndUpdate(
             id,

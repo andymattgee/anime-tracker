@@ -14,12 +14,10 @@ const InventoryPage = () => {
   const [editingManga, setEditingManga] = useState(null);
   const [viewingDetailsId, setViewingDetailsId] = useState(null); // State to track which item's details to view
   const [editForm, setEditForm] = useState({
-    title: '',
     episodesWatched: '',
-    totalEpisodes: '',
-    userStatus: '', // Renamed
-    userScore: '',  // Renamed
-    userNotes: ''   // Renamed
+    userStatus: '',
+    userScore: '',
+    userNotes: ''
   });
   const [editMangaForm, setEditMangaForm] = useState({
     title: '',
@@ -156,9 +154,7 @@ const InventoryPage = () => {
   const handleEditAnime = (anime) => {
     setEditingAnime(anime);
     setEditForm({
-      title: anime.title,
       episodesWatched: anime.episodesWatched,
-      totalEpisodes: anime.totalEpisodes,
       userStatus: anime.userStatus,
       userScore: anime.userScore,
       userNotes: anime.userNotes
@@ -186,11 +182,9 @@ const InventoryPage = () => {
         headers: {
           'Content-Type': 'application/json',
         },
-        // Send renamed fields to backend
+        // Send only user-editable fields to backend
         body: JSON.stringify({
-            title: editForm.title,
             episodesWatched: editForm.episodesWatched,
-            totalEpisodes: editForm.totalEpisodes,
             userStatus: editForm.userStatus,
             userScore: editForm.userScore,
             userNotes: editForm.userNotes
@@ -205,13 +199,11 @@ const InventoryPage = () => {
         setAnimeList(animeList.map(anime =>
           anime.id === updatedAnime._id
             ? {
-                ...anime, // Keep existing API data
-                title: updatedAnime.title,
+                ...anime, // Keep existing data
                 userStatus: updatedAnime.userStatus,
-                progress: `Episode ${updatedAnime.episodesWatched}/${updatedAnime.totalEpisodes || '?'}`,
+                progress: `Episode ${updatedAnime.episodesWatched}/${anime.totalEpisodes || '?'}`,
                 userScore: updatedAnime.userScore,
                 episodesWatched: updatedAnime.episodesWatched,
-                totalEpisodes: updatedAnime.totalEpisodes, // Update this if backend sends it back
                 userNotes: updatedAnime.userNotes
               }
             : anime
@@ -296,23 +288,13 @@ const InventoryPage = () => {
     return (
       <div className="modal-overlay">
         <div className="modal-content">
-          <h2>Edit Anime Entry</h2>
+          <h2>Edit Anime Entry - {editingAnime.title}</h2>
           <form onSubmit={handleEditAnimeSubmit}>
-            {/* Title */}
-            <div className="form-group">
-              <label>Title:</label>
-              <input type="text" name="title" value={editForm.title} onChange={handleEditAnimeChange} required />
-            </div>
             {/* Episodes Watched */}
             <div className="form-group">
               <label>Episodes Watched:</label>
               <input type="number" name="episodesWatched" value={editForm.episodesWatched} onChange={handleEditAnimeChange} required />
             </div>
-            {/* Total Episodes */}
-            <div className="form-group">
-               <label>Total Episodes:</label>
-               <input type="number" name="totalEpisodes" value={editForm.totalEpisodes} onChange={handleEditAnimeChange} required />
-             </div>
             {/* User Status */}
             <div className="form-group">
               <label>Status:</label>
