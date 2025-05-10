@@ -6,29 +6,28 @@
 .inventory-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 20px;
 }
 
 .tabs {
   display: flex;
-  margin-bottom: 2rem;
-  border-bottom: 1px solid #ddd;
+  justify-content: center;
+  margin-bottom: 20px;
 }
 
 .tab-button {
-  padding: 0.75rem 1.5rem;
-  background: none;
+  padding: 10px 20px;
+  margin: 0 10px;
   border: none;
-  border-bottom: 3px solid transparent;
+  background: #e0e0e0;
   cursor: pointer;
+  border-radius: 4px;
   font-size: 1rem;
-  font-weight: 500;
-  color: #666;
 }
 
 .tab-button.active {
-  color: #007bff;
-  border-bottom-color: #007bff;
+  background: #007bff;
+  color: white;
 }
 
 .inventory-header {
@@ -37,72 +36,101 @@
   margin-bottom: 1.5rem;
 }
 
-
-.inventory-grid {
+/* Updated grid to match ExplorePage.css */
+.results-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 20px;
+  margin-top: 30px;
 }
 
-.inventory-card {
-  background: white;
+/* Updated card styles to match ExplorePage.css */
+.result-card {
+  border: 1px solid #eee;
   border-radius: 8px;
+  overflow: hidden;
+  text-align: center;
+  background-color: #fff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  padding: 1.5rem;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-.inventory-card:hover {
+.result-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
-.inventory-card h3 {
-  margin-top: 0;
-  margin-bottom: 1rem;
-  font-size: 1.25rem;
+.card-content {
+  display: flex;
+  flex-direction: column;
+  cursor: pointer;
+}
+
+.result-card img {
+  width: 100%;
+  height: 250px;
+  object-fit: cover;
+  display: block;
+}
+
+.result-card h3 {
+  font-size: 1rem;
+  margin: 10px;
+  min-height: 40px;
   color: #333;
 }
 
+.result-card p {
+  font-size: 0.9rem;
+  color: #666;
+  margin: 5px 10px 10px;
+}
+
+/* Restore inventory details styling */
 .inventory-details {
-  margin-bottom: 1.5rem;
+  padding: 0 10px;
 }
 
 .inventory-details p {
-  margin: 0.5rem 0;
-  color: #555;
+  font-size: 0.9rem;
+  color: #666;
+  margin: 5px 10px 10px;
 }
 
+/* Keep the existing inventory action buttons */
 .inventory-actions {
   display: flex;
-  gap: 0.75rem;
+  justify-content: space-between;
+  padding: 10px;
+  gap: 5px;
+}
+
+.inventory-actions button {
+  flex: 1;
+  padding: 8px 15px;
+  font-size: 0.9rem;
 }
 
 .btn {
-  padding: 0.5rem 1rem;
+  padding: 8px 16px;
   border: none;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.9rem;
-  font-weight: 500;
 }
 
 .btn-primary {
-  background-color: #007bff;
+  background: #007bff;
   color: white;
-}
-
-.btn-primary:hover {
-  background-color: #0056b3;
 }
 
 .btn-secondary {
-  background-color: #6c757d;
+  background: #6c757d;
   color: white;
 }
 
-.btn-secondary:hover {
-  background-color: #545b62;
+.btn:hover {
+  opacity: 0.9;
 }
 
 .modal-overlay {
@@ -120,10 +148,10 @@
 
 .modal-content {
   background: white;
-  padding: 2rem;
+  padding: 20px;
   border-radius: 8px;
-  width: 90%;
   max-width: 500px;
+  width: 90%;
   max-height: 90vh;
   overflow-y: auto;
 }
@@ -150,26 +178,20 @@
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
-  margin-top: 1rem;
+  gap: 10px;
+  margin-top: 20px;
 }
 
 .no-data {
   text-align: center;
-  margin: 3rem 0;
-  color: #666;
-}
-
-.no-data p {
-  margin-bottom: 1.5rem;
-  font-size: 1.1rem;
+  padding: 20px;
+  font-size: 1.2rem;
 }
 
 .loading, .error {
   text-align: center;
-  margin: 3rem 0;
-  padding: 1rem;
-  border-radius: 8px;
+  padding: 20px;
+  font-size: 1.2rem;
 }
 
 .loading {
@@ -177,8 +199,7 @@
 }
 
 .error {
-  color: #721c24;
-  background-color: #f8d7da;
+  color: #dc3545;
 }
 
 /* Responsive design */
@@ -187,112 +208,67 @@
     padding: 1rem;
   }
   
-  .inventory-grid {
-    grid-template-columns: 1fr;
+  .results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .result-card img {
+    height: 200px;
   }
   
   .tabs {
     flex-direction: column;
-    border-bottom: none;
   }
   
   .tab-button {
     width: 100%;
     text-align: center;
-    border-bottom: 1px solid #ddd;
+    margin: 5px 0;
   }
-  
-  .tab-button.active {
-    border-bottom: 1px solid #007bff;
-  }
-} 
-/* Styles for inventory card images */
-.inventory-card-image {
-  width: 100%; /* Make image take full width of card */
-  height: 200px; /* Set a fixed height */
-  object-fit: cover; /* Cover the area, cropping if necessary */
-  border-bottom: 1px solid #eee; /* Optional separator */
-  margin-bottom: 10px; /* Space below image */
 }
 
-.inventory-card h3 {
-  margin-top: 0; /* Adjust title margin if image is present */
-}
 /* --- Details Modal Styles --- */
-.details-modal .modal-content {
-  max-width: 700px; /* Wider modal for details */
+.details-modal {
+  max-width: 800px;
+  width: 90%;
 }
 
 .details-content {
   display: flex;
   gap: 20px;
-  align-items: flex-start; /* Align items to the top */
+  margin: 20px 0;
 }
 
 .details-modal-image {
-  flex-shrink: 0; /* Prevent image from shrinking */
-  width: 200px; /* Fixed width for the image */
+  width: 200px;
   height: auto;
-  max-height: 300px; /* Limit image height */
   object-fit: cover;
-  border-radius: 4px;
 }
 
 .details-text {
-  flex-grow: 1; /* Allow text section to take remaining space */
-  text-align: left;
+  flex: 1;
 }
 
 .details-text h4 {
   margin-top: 15px;
-  margin-bottom: 8px;
-  color: #0056b3; /* Accent color for headings */
-  border-bottom: 1px solid #eee;
-  padding-bottom: 4px;
+  margin-bottom: 10px;
+  color: #333;
 }
 
 .details-text p {
-  margin-bottom: 8px;
-  line-height: 1.5;
-  font-size: 0.95rem;
+  margin: 8px 0;
 }
 
 .details-text strong {
-  color: #333;
+  color: #555;
 }
 
 .details-text hr {
   border: 0;
-  height: 1px;
-  background-color: #eee;
+  border-top: 1px solid #eee;
   margin: 15px 0;
 }
 
 .details-modal .modal-actions {
-  justify-content: flex-end; /* Align close button to the right */
-}
-
-/* Style for the details button on the card */
-.inventory-actions .btn-info {
-  background-color: #17a2b8; /* Teal color */
-  border-color: #17a2b8;
-  color: white;
-}
-
-.inventory-actions .btn-info:hover {
-  background-color: #138496;
-  border-color: #117a8b;
-}
-
-/* Adjust card actions layout if needed */
-.inventory-actions {
-  display: flex;
-  gap: 5px; /* Smaller gap for more buttons */
-  flex-wrap: wrap; /* Allow buttons to wrap */
-  justify-content: center; /* Center buttons */
-}
-
-.inventory-actions .btn {
-  flex-grow: 1; /* Allow buttons to share space */
-  min-width: 70px; /* Minimum button width */
+  justify-content: flex-end;
 }

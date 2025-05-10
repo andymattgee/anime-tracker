@@ -473,19 +473,21 @@ const InventoryPage = () => {
 
     return (
       <>
-        <div className="inventory-grid">
+        <div className="results-grid">
           {list.map((item) => (
-            <div key={item.id} className="inventory-card" onClick={() => setViewingDetailsId(item.id)} style={{ cursor: 'pointer' }}>
-              {item.coverImage && (
-                <img src={item.coverImage} alt={`${item.title} cover`} className="inventory-card-image" />
-              )}
-              <h3>{item.title}</h3>
-              <div className="inventory-details">
-                 {/* Display user status for anime, original status for manga */}
-                <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
-                <p><strong>Progress:</strong> {item.progress}</p>
-                 {/* Display user score for anime, original rating for manga */}
-                <p><strong>Rating:</strong> {(isAnime ? item.userScore : item.rating) !== null && (isAnime ? item.userScore : item.rating) !== undefined ? `${isAnime ? item.userScore : item.rating}/10` : 'N/A'}</p>
+            <div key={item.id} className="result-card">
+              <div className="card-content" onClick={() => setViewingDetailsId(item.id)}>
+                {item.coverImage && (
+                  <img 
+                    src={item.coverImage} 
+                    alt={`${item.title} cover`} 
+                  />
+                )}
+                <h3>{item.title}</h3>
+                <div className="inventory-details">
+                  <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
+                  <p><strong>Community Score:</strong> {item.apiScore || 'N/A'}</p>
+                </div>
               </div>
               <div className="inventory-actions">
                 <button
