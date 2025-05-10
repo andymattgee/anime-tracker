@@ -129,6 +129,11 @@
   color: white;
 }
 
+.btn-danger {
+  background: #dc3545;
+  color: white;
+}
+
 .btn:hover {
   opacity: 0.9;
 }
@@ -229,24 +234,29 @@
 
 /* --- Details Modal Styles --- */
 .details-modal {
-  max-width: 800px;
+  max-width: 900px;
   width: 90%;
+  padding: 25px;
 }
 
 .details-content {
   display: flex;
-  gap: 20px;
+  gap: 30px;
   margin: 20px 0;
+  flex-wrap: wrap;
 }
 
 .details-modal-image {
-  width: 200px;
+  width: 250px;
   height: auto;
-  object-fit: cover;
+  object-fit: contain;
+  border-radius: 6px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
 }
 
 .details-text {
   flex: 1;
+  min-width: 300px;
 }
 
 .details-text h4 {
@@ -271,4 +281,17 @@
 
 .details-modal .modal-actions {
   justify-content: flex-end;
+  gap: 15px;
+}
+
+/* Add media query for better mobile display */
+@media (max-width: 768px) {
+  .details-content {
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .details-modal-image {
+    margin-bottom: 20px;
+  }
 }

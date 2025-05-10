@@ -32,7 +32,7 @@ const ExplorePage = () => {
   const fetchTopAnime = async () => {
     setLoadingTop(prev => ({ ...prev, anime: true }));
     try {
-      const response = await axios.get('https://api.jikan.moe/v4/top/anime?limit=10');
+      const response = await axios.get('https://api.jikan.moe/v4/top/anime?limit=25');
       setTopAnime(response.data.data || []);
       return true;
     } catch (err) {
@@ -54,7 +54,7 @@ const ExplorePage = () => {
   const fetchTopManga = async () => {
     setLoadingTop(prev => ({ ...prev, manga: true }));
     try {
-      const response = await axios.get('https://api.jikan.moe/v4/top/manga?limit=10');
+      const response = await axios.get('https://api.jikan.moe/v4/top/manga?limit=25');
       setTopManga(response.data.data || []);
     } catch (err) {
       console.error("Error fetching top manga:", err);
@@ -259,7 +259,7 @@ const ExplorePage = () => {
           <>
             {/* Top Anime Section */}
             <div className="top-section">
-              <h2>Top Anime</h2>
+              <h2>Top 25 Anime - Voted by Community</h2>
               {loadingTop.anime ? (
                 <p>Loading top anime...</p>
               ) : (
@@ -271,7 +271,7 @@ const ExplorePage = () => {
 
             {/* Top Manga Section */}
             <div className="top-section">
-              <h2>Top Manga</h2>
+              <h2>Top 25 Manga - Voted by Community</h2>
               {loadingTop.manga ? (
                 <p>Loading top manga...</p>
               ) : (

@@ -421,7 +421,15 @@ const InventoryPage = () => {
             <div className="details-text">
               <p><strong>Synopsis:</strong> {item.synopsis || 'N/A'}</p>
               <hr />
-              <h4>Your Tracking:</h4>
+              <h4>Your Tracking: <span
+                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline', marginLeft: '10px' }}
+                onClick={() => {
+                  setViewingDetailsId(null);
+                  isAnime ? handleEditAnime(item) : handleEditManga(item);
+                }}
+              >
+                Edit
+              </span></h4>
               <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
               <p><strong>Progress:</strong> {item.progress}</p>
               <p><strong>Your Score:</strong> {(isAnime ? item.userScore : item.rating) !== null && (isAnime ? item.userScore : item.rating) !== undefined ? `${isAnime ? item.userScore : item.rating}/10` : 'N/A'}</p>
@@ -440,7 +448,21 @@ const InventoryPage = () => {
             </div>
           </div>
           <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setViewingDetailsId(null)}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                setViewingDetailsId(null);
+                isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id);
+              }}
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setViewingDetailsId(null)}
+            >
               Close
             </button>
           </div>
@@ -489,20 +511,6 @@ const InventoryPage = () => {
                   <p><strong>Community Score:</strong> {item.apiScore || 'N/A'}</p>
                 </div>
               </div>
-              <div className="inventory-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={(e) => { e.stopPropagation(); isAnime ? handleEditAnime(item) : handleEditManga(item); }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={(e) => { e.stopPropagation(); isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id); }}
-                >
-                  Delete
-                </button>
-              </div>
             </div>
           ))}
         </div>
@@ -531,7 +539,7 @@ const InventoryPage = () => {
         {renderContent()}
         {renderEditAnimeModal()}
         {renderEditMangaModal()}
-        {renderDetailsModal()} {/* Call the new details modal here */}
+        {renderDetailsModal()}
       </div>
     </div>
   );
