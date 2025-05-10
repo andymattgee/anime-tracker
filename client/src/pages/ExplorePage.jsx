@@ -100,8 +100,8 @@ const ExplorePage = () => {
 
   // Function to handle adding an item (anime or manga) to the inventory
   const handleAddItemToInventory = async (itemData, type = searchType) => {
-    const mal_id = itemData.mal_id; // Get the mal_id of the item
-    setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'adding' } })); // Set adding status
+    const mal_id = itemData.mal_id;
+    setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'adding' } }));
 
     // Base payload common to both anime and manga
     let payload = {
@@ -109,18 +109,17 @@ const ExplorePage = () => {
       title: itemData.title,
       coverImage: itemData.images?.jpg?.image_url || null,
       synopsis: itemData.synopsis || null,
-      apiStatus: itemData.status || null, // Jikan's 'status' field (e.g., "Finished Airing", "Publishing")
+      apiStatus: itemData.status || null,
       apiScore: itemData.score || null,
       source: itemData.source || null,
       genres: itemData.genres?.map(g => g.name) || [],
-      // User-specific fields can be defaulted by the backend or passed if needed
     };
 
-    let endpoint = ''; // Endpoint for the API request
+    let endpoint = '';
 
     // Determine the endpoint and payload based on the item type
     if (type === 'anime') {
-      endpoint = 'http://localhost:5001/api/anime/create'; // API endpoint for creating anime
+      endpoint = 'http://localhost:5001/api/anime/create';
       payload = {
         ...payload,
         totalEpisodes: itemData.episodes || null,
@@ -129,12 +128,12 @@ const ExplorePage = () => {
         airedTo: itemData.aired?.to || null,
       };
     } else { // manga
-      endpoint = 'http://localhost:5001/api/manga/create'; // API endpoint for creating manga
+      endpoint = 'http://localhost:5001/api/manga/create';
       payload = {
         ...payload,
         totalChapters: itemData.chapters || null,
-        totalVolumes: itemData.volumes || null, // Jikan API provides 'volumes' for manga
-        publishedFrom: itemData.published?.from || null, // Jikan uses 'published' for manga dates
+        totalVolumes: itemData.volumes || null,
+        publishedFrom: itemData.published?.from || null,
         publishedTo: itemData.published?.to || null,
       };
     }
@@ -157,14 +156,28 @@ const ExplorePage = () => {
       }
     } catch (err) {
       console.error(`Error adding ${type}:`, err);
-      // Update the add status to indicate an error
-      setAddStatus(prev => ({ 
-        ...prev, 
-        [mal_id]: { 
-          status: 'error', 
-          message: err.message || `Error adding ${type}` 
-        } 
-      }));
+      
+      // Check if this is a duplicate error from the backend
+      if (err.response && err.response.status === 409) {
+        // Use the specific message from the backend
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: err.response.data.message || 'This item is already in your inventory'
+          } 
+        }));
+      } else {
+        // Handle other types of errors
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: err.message || `Error adding ${type}` 
+          } 
+        }));
+      }
+      
       // Clear the error message after a timeout
       setTimeout(() => {
         setAddStatus(prev => ({ ...prev, [mal_id]: undefined }));
