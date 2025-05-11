@@ -286,8 +286,8 @@ const InventoryPage = () => {
     if (!editingAnime) return null;
 
     return (
-      <div className="modal-overlay">
-        <div className="modal-content">
+      <div className="modal-overlay" onClick={() => setEditingAnime(null)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <h2>Edit Anime Entry - {editingAnime.title}</h2>
           <form onSubmit={handleEditAnimeSubmit}>
             {/* Episodes Watched */}
@@ -330,8 +330,8 @@ const InventoryPage = () => {
     if (!editingManga) return null;
 
     return (
-      <div className="modal-overlay">
-        <div className="modal-content">
+      <div className="modal-overlay" onClick={() => setEditingManga(null)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <h2>Edit Manga Entry</h2>
           <form onSubmit={handleEditMangaSubmit}>
              {/* Title */}
@@ -424,7 +424,6 @@ const InventoryPage = () => {
               <h4>Your Tracking: <span
                 style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline', marginLeft: '10px' }}
                 onClick={() => {
-                  setViewingDetailsId(null);
                   isAnime ? handleEditAnime(item) : handleEditManga(item);
                 }}
               >
@@ -537,9 +536,9 @@ const InventoryPage = () => {
           </button>
         </div>
         {renderContent()}
+        {renderDetailsModal()}
         {renderEditAnimeModal()}
         {renderEditMangaModal()}
-        {renderDetailsModal()}
       </div>
     </div>
   );

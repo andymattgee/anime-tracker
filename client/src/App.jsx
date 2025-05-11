@@ -5,7 +5,8 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
-import InventoryPage from './pages/InventoryPage';
+import AnimeInventoryPage from './pages/AnimeInventoryPage';
+import MangaInventoryPage from './pages/MangaInventoryPage';
 
 import ExplorePage from './pages/ExplorePage'; // Import the new Explore page
 
@@ -19,8 +20,8 @@ const App = () => {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/signup" element={<SignupPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-         
+          <Route path="/my-anime" element={<AnimeInventoryPage />} />
+          <Route path="/my-manga" element={<MangaInventoryPage />} />
           <Route path="/explore" element={<ExplorePage />} /> {/* Add route for Explore page */}
         </Routes>
       </div>

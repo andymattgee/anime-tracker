@@ -114,9 +114,26 @@ exports.getMangaById = async (req, res) => {
 // Update a manga
 exports.updateManga = async (req, res) => {
     try {
+        const { chaptersRead, userStatus, userScore, userNotes } = req.body;
+
+        // Construct an object with only the allowed fields to update
+        const updateFields = {};
+        if (chaptersRead !== undefined) updateFields.chaptersRead = chaptersRead;
+        if (userStatus !== undefined) updateFields.userStatus = userStatus;
+        if (userScore !== undefined) updateFields.userScore = userScore; // Allow null for score
+        if (userNotes !== undefined) updateFields.userNotes = userNotes;
+
+        // Check if there's anything to update
+        if (Object.keys(updateFields).length === 0) {
+            return res.status(400).json({
+                success: false,
+                message: 'No valid fields provided for update.'
+            });
+        }
+
         const manga = await Manga.findByIdAndUpdate(
             req.params.id,
-            req.body,
+            updateFields, // Use the filtered updateFields object
             { new: true, runValidators: true }
         );
         
