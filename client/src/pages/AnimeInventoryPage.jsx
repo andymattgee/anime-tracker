@@ -10,14 +10,14 @@ const AnimeInventoryPage = () => {
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingAnime, setEditingAnime] = useState(null);
+  // const [editingAnime, setEditingAnime] = useState(null); // No longer needed
   const [viewingDetailsId, setViewingDetailsId] = useState(null);
-  const [editForm, setEditForm] = useState({
-    episodesWatched: '',
-    userStatus: '',
-    userScore: '',
-    userNotes: ''
-  });
+  // const [editForm, setEditForm] = useState({ // Form state will be managed by DetailsModal or passed directly
+  //   episodesWatched: '',
+  //   userStatus: '',
+  //   userScore: '',
+  //   userNotes: ''
+  // });
 
   useEffect(() => {
     fetchData();
@@ -86,104 +86,50 @@ const AnimeInventoryPage = () => {
     }
   };
 
-  const handleEditAnime = (anime) => {
-    setEditingAnime(anime);
-    setEditForm({
-      episodesWatched: anime.episodesWatched,
-      userStatus: anime.userStatus,
-      userScore: anime.userScore,
-      userNotes: anime.userNotes
-    });
-  };
+  // handleEditAnime is no longer needed here as DetailsModal handles its edit state.
+  // The onEdit prop for DetailsModal can be removed if not used to trigger an external state change.
+  // For now, DetailsModal has an internal "Edit" button.
 
-  const handleEditAnimeSubmit = async (e) => {
-    e.preventDefault();
+  const handleSaveChanges = async (animeId, updatedData) => {
     try {
-      const response = await fetch(`http://localhost:5001/api/anime/${editingAnime.id}`, {
+      const response = await fetch(`http://localhost:5001/api/anime/${animeId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            episodesWatched: editForm.episodesWatched,
-            userStatus: editForm.userStatus,
-            userScore: editForm.userScore,
-            userNotes: editForm.userNotes
-        }),
+        body: JSON.stringify(updatedData), // Send data from DetailsModal's form
       });
 
       const result = await response.json();
 
       if (result.success) {
         const updatedAnime = result.data;
-        setAnimeList(animeList.map(anime =>
+        setAnimeList(prevList => prevList.map(anime =>
           anime.id === updatedAnime._id
-            ? {
-                ...anime,
+            ? { // Merge existing data with updated data
+                ...anime, // Keep fields like coverImage, synopsis etc.
                 userStatus: updatedAnime.userStatus,
-                progress: `Episode ${updatedAnime.episodesWatched}/${anime.totalEpisodes || '?'}`,
+                progress: `Episode ${updatedAnime.episodesWatched}/${updatedAnime.totalEpisodes || anime.totalEpisodes || '?'}`, // Ensure totalEpisodes is available
                 userScore: updatedAnime.userScore,
                 episodesWatched: updatedAnime.episodesWatched,
-                userNotes: updatedAnime.userNotes
+                userNotes: updatedAnime.userNotes,
+                // Potentially update other fields if the backend returns them
+                totalEpisodes: updatedAnime.totalEpisodes || anime.totalEpisodes, // Persist totalEpisodes
               }
             : anime
         ));
-        setEditingAnime(null);
+        // Optionally close the modal or DetailsModal handles its state
+        // setViewingDetailsId(null); // If you want to close modal on save
       } else {
         throw new Error(result.message || 'Failed to update anime');
       }
     } catch (err) {
       console.error('Error updating anime:', err);
-      setError(err.message);
+      setError(err.message); // Display error to user
     }
   };
 
-  const handleEditAnimeChange = (e) => {
-    const { name, value } = e.target;
-    setEditForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const renderEditAnimeModal = () => {
-    if (!editingAnime) return null;
-
-    return (
-      <div className="modal-overlay" onClick={() => setEditingAnime(null)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <h2>Edit Anime Entry - {editingAnime.title}</h2>
-          <form onSubmit={handleEditAnimeSubmit}>
-            <div className="form-group">
-              <label>Episodes Watched:</label>
-              <input type="number" name="episodesWatched" value={editForm.episodesWatched} onChange={handleEditAnimeChange} required />
-            </div>
-            <div className="form-group">
-              <label>Status:</label>
-              <select name="userStatus" value={editForm.userStatus} onChange={handleEditAnimeChange} required>
-                <option value="Watching">Watching</option>
-                <option value="Completed">Completed</option>
-                <option value="Plan to Watch">Plan to Watch</option>
-                <option value="Dropped">Dropped</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Score:</label>
-              <input type="number" name="userScore" value={editForm.userScore ?? ''} onChange={handleEditAnimeChange} min="0" max="10" />
-            </div>
-            <div className="form-group">
-              <label>Notes:</label>
-              <textarea name="userNotes" value={editForm.userNotes} onChange={handleEditAnimeChange} />
-            </div>
-            <div className="modal-actions">
-              <button type="submit" className="btn btn-primary">Save Changes</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setEditingAnime(null)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
-  };
+  // renderEditAnimeModal and handleEditAnimeChange are no longer needed.
 
   const renderContent = () => {
     if (loading) {
@@ -227,11 +173,12 @@ const AnimeInventoryPage = () => {
           isOpen={!!viewingDetailsId}
           onClose={() => setViewingDetailsId(null)}
           item={animeList.find(a => a.id === viewingDetailsId)}
-          onEdit={handleEditAnime}
+          // onEdit is handled internally by DetailsModal now by its own "Edit" button
+          onSave={handleSaveChanges} // Pass the save handler
           onDelete={handleDeleteAnime}
           mediaType="anime"
         />
-        {renderEditAnimeModal()}
+        {/* renderEditAnimeModal is removed */}
       </div>
     </div>
   );

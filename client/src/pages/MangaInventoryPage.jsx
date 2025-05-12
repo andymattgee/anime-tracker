@@ -10,14 +10,14 @@ const MangaInventoryPage = () => {
   const [mangaList, setMangaList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [editingManga, setEditingManga] = useState(null);
+  // const [editingManga, setEditingManga] = useState(null); // No longer needed
   const [viewingDetailsId, setViewingDetailsId] = useState(null);
-  const [editMangaForm, setEditMangaForm] = useState({
-    chaptersRead: '',
-    userStatus: '',
-    userScore: '',
-    userNotes: ''
-  });
+  // const [editMangaForm, setEditMangaForm] = useState({ // Form state will be managed by DetailsModal
+  //   chaptersRead: '',
+  //   userStatus: '',
+  //   userScore: '',
+  //   userNotes: ''
+  // });
 
   useEffect(() => {
     fetchData();
@@ -90,53 +90,42 @@ const MangaInventoryPage = () => {
     }
   };
 
-  const handleEditManga = (manga) => {
-    setEditingManga(manga);
-    setEditMangaForm({
-      chaptersRead: manga.chaptersRead,
-      userStatus: manga.userStatus, // Use the direct field from fetched manga
-      userScore: manga.userScore,   // Use the direct field
-      userNotes: manga.userNotes    // Use the direct field
-    });
-  };
-
-  const handleEditMangaSubmit = async (e) => {
-    e.preventDefault();
+  const handleSaveChanges = async (mangaId, updatedData) => {
+    // updatedData from DetailsModal contains { chaptersRead, userStatus, userScore, userNotes }
     try {
-      const response = await fetch(`http://localhost:5001/api/manga/${editingManga.id}`, {
+      const response = await fetch(`http://localhost:5001/api/manga/${mangaId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-            chaptersRead: editMangaForm.chaptersRead,
-            userStatus: editMangaForm.userStatus,
-            userScore: editMangaForm.userScore,
-            userNotes: editMangaForm.userNotes
-        }),
+        body: JSON.stringify(updatedData),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        const updatedManga = result.data;
-        setMangaList(mangaList.map(manga =>
-          manga.id === updatedManga._id
-            ? { // Ensure updatedManga from backend has userStatus, userScore, userNotes
-                ...manga,
-                status: updatedManga.userStatus, // Update display field
-                progress: `Chapter ${updatedManga.chaptersRead}/${manga.totalChapters || '?'}`,
-                rating: updatedManga.userScore,  // Update display field
-                chaptersRead: updatedManga.chaptersRead,
-                notes: updatedManga.userNotes,   // Update display field
-                // also update the direct user* fields on the local item
-                userStatus: updatedManga.userStatus,
-                userScore: updatedManga.userScore,
-                userNotes: updatedManga.userNotes
+        const updatedMangaBackend = result.data; // Full updated manga object from backend
+        setMangaList(prevList => prevList.map(manga =>
+          manga.id === updatedMangaBackend._id
+            ? {
+                ...manga, // Preserve existing non-editable fields
+                chaptersRead: updatedMangaBackend.chaptersRead,
+                userStatus: updatedMangaBackend.userStatus,
+                userScore: updatedMangaBackend.userScore,
+                userNotes: updatedMangaBackend.userNotes,
+                totalChapters: updatedMangaBackend.totalChapters || manga.totalChapters, // Preserve totalChapters
+
+                // Update aliases for display consistency within the list item
+                status: updatedMangaBackend.userStatus,
+                rating: updatedMangaBackend.userScore,
+                notes: updatedMangaBackend.userNotes,
+                
+                // Recompute progress string
+                progress: `Chapter ${updatedMangaBackend.chaptersRead}/${updatedMangaBackend.totalChapters || manga.totalChapters || '?'}`,
               }
             : manga
         ));
-        setEditingManga(null);
+        // setViewingDetailsId(null); // Optional: Close modal upon successful save
       } else {
         throw new Error(result.message || 'Failed to update manga');
       }
@@ -144,55 +133,6 @@ const MangaInventoryPage = () => {
       console.error('Error updating manga:', err);
       setError(err.message);
     }
-  };
-
-  const handleEditMangaChange = (e) => {
-    const { name, value } = e.target;
-    setEditMangaForm(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const renderEditMangaModal = () => {
-    if (!editingManga) return null;
-
-    return (
-      <div className="modal-overlay" onClick={() => setEditingManga(null)}>
-        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-          <h2>Edit Manga Entry - {editingManga.title}</h2>
-          <form onSubmit={handleEditMangaSubmit}>
-             {/* Title field removed */}
-             <div className="form-group">
-               <label>Chapters Read:</label>
-               <input type="number" name="chaptersRead" value={editMangaForm.chaptersRead} onChange={handleEditMangaChange} required />
-             </div>
-             {/* Total Chapters field removed */}
-            <div className="form-group">
-              <label>Status:</label>
-              <select name="userStatus" value={editMangaForm.userStatus} onChange={handleEditMangaChange} required>
-                <option value="Reading">Reading</option>
-                <option value="Completed">Completed</option>
-                <option value="Plan to Read">Plan to Read</option>
-                <option value="Dropped">Dropped</option>
-              </select>
-            </div>
-            <div className="form-group">
-              <label>Score:</label>
-              <input type="number" name="userScore" value={editMangaForm.userScore ?? ''} onChange={handleEditMangaChange} min="0" max="10" />
-            </div>
-            <div className="form-group">
-              <label>Notes:</label>
-              <textarea name="userNotes" value={editMangaForm.userNotes} onChange={handleEditMangaChange} />
-            </div>
-            <div className="modal-actions">
-              <button type="submit" className="btn btn-primary">Save Changes</button>
-              <button type="button" className="btn btn-secondary" onClick={() => setEditingManga(null)}>Cancel</button>
-            </div>
-          </form>
-        </div>
-      </div>
-    );
   };
 
   const renderContent = () => {
@@ -237,11 +177,11 @@ const MangaInventoryPage = () => {
           isOpen={!!viewingDetailsId}
           onClose={() => setViewingDetailsId(null)}
           item={mangaList.find(m => m.id === viewingDetailsId)}
-          onEdit={handleEditManga}
+          onSave={handleSaveChanges} // Use the new save handler
           onDelete={handleDeleteManga}
           mediaType="manga"
         />
-        {renderEditMangaModal()}
+        {/* renderEditMangaModal() is no longer called */}
       </div>
     </div>
   );
