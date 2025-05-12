@@ -20,10 +20,21 @@ const MediaCard = ({ item, onClick, children }) => {
         {item.coverImage && (
           <img
             src={item.coverImage}
-            alt={`${item.title} cover`}
+            alt={
+              item.title_english
+                ? (item.title && item.title_english !== item.title ? `${item.title_english} (${item.title}) cover` : `${item.title_english} cover`)
+                : `${item.title} cover`
+            }
           />
         )}
-        <h3>{item.title}</h3>
+        <h3>
+          {item.title_english || item.title}
+          {item.title_english && item.title && item.title_english !== item.title && (
+            <span style={{ display: 'block', fontSize: '0.8em', fontWeight: 'normal', marginTop: '0.2em' }}>
+              ({item.title})
+            </span>
+          )}
+        </h3>
         <div className="inventory-details">
           {displayStatus && <p><strong>Status:</strong> {displayStatus}</p>}
           {displayCommunityScore !== undefined && displayCommunityScore !== null && (

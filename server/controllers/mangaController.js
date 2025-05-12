@@ -6,6 +6,7 @@ exports.createManga = async (req, res) => {
         const {
             mal_id,
             title,
+            title_english,
             totalChapters,
             totalVolumes,
             coverImage,
@@ -39,6 +40,7 @@ exports.createManga = async (req, res) => {
             // Fields from Jikan API / frontend
             mal_id: mal_id,
             title: title,
+            title_english: title_english || null,
             totalChapters: totalChapters || null,
             totalVolumes: totalVolumes || null,
             coverImage: coverImage || null,

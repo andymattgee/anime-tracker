@@ -6,6 +6,7 @@ const createAnime = async (req, res) => {
         const {
             mal_id,
             title,
+            title_english,
             totalEpisodes,
             coverImage,
             synopsis,
@@ -40,6 +41,7 @@ const createAnime = async (req, res) => {
             // Fields from Jikan API / frontend
             mal_id: mal_id,
             title: title,
+            title_english: title_english || null,
             totalEpisodes: totalEpisodes || null,
             coverImage: coverImage || null,
             synopsis: synopsis || null,

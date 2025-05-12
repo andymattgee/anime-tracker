@@ -162,11 +162,16 @@ const ExplorePage = () => {
 
   // Function to handle clicking a suggestion
   const handleSuggestionClick = (suggestion) => {
-    const clickedTerm = suggestion.title;
-    setSearchTerm(clickedTerm); // Update the input field
+    const mainTitle = suggestion.title;
+    const englishTitle = suggestion.title_english;
+    let displayTerm = mainTitle;
+    if (englishTitle && englishTitle !== mainTitle) {
+      displayTerm = `${mainTitle} / ${englishTitle}`;
+    }
+    setSearchTerm(displayTerm); // Update the input field
     // setSuggestions([]); // No longer needed, setShowSuggestions(false) handles hiding
     setShowSuggestions(false); // Hide suggestions after click
-    executeSearch(clickedTerm, searchType); // Perform a full search for the clicked item
+    executeSearch(mainTitle, searchType); // Perform a full search for the main title
   };
 
   // Effect to handle clicks outside the search wrapper to close suggestions
@@ -197,6 +202,7 @@ const ExplorePage = () => {
     let payload = {
       mal_id: mal_id,
       title: itemData.title,
+      title_english: itemData.title_english || null,
       coverImage: itemData.images?.jpg?.image_url || null,
       synopsis: itemData.synopsis || null,
       apiStatus: itemData.status || null,
@@ -322,11 +328,14 @@ const ExplorePage = () => {
                       {suggestion.images?.jpg?.small_image_url && (
                         <img
                           src={suggestion.images.jpg.small_image_url}
-                          alt={suggestion.title}
+                          alt={suggestion.title_english && suggestion.title_english !== suggestion.title ? `${suggestion.title} / ${suggestion.title_english}` : suggestion.title}
                           className="suggestion-thumbnail"
                         />
                       )}
-                      <span>{suggestion.title}</span>
+                      <span>
+                        {suggestion.title}
+                        {suggestion.title_english && suggestion.title_english !== suggestion.title && ` / ${suggestion.title_english}`}
+                      </span>
                     </li>
                   ))}
                   {/* Show "No suggestions found" only if not loading suggestions, suggestions array is empty, and there is a search term */}

@@ -4,8 +4,22 @@ const ExplorePageCard = ({ item, type, addStatus, handleAddItemToInventory, chil
   return (
     <div key={item.mal_id} className="result-card">
       <a href={item.url} target="_blank" rel="noopener noreferrer">
-        <img src={item.images?.jpg?.image_url} alt={item.title} />
-        <h3>{item.title}</h3>
+        <img
+          src={item.images?.jpg?.image_url}
+          alt={
+            item.title_english
+              ? (item.title && item.title_english !== item.title ? `${item.title_english} (${item.title})` : item.title_english)
+              : item.title
+          }
+        />
+        <h3>
+          {item.title_english || item.title}
+          {item.title_english && item.title && item.title_english !== item.title && (
+            <span style={{ display: 'block', fontSize: '0.8em', fontWeight: 'normal', marginTop: '0.2em' }}>
+              ({item.title})
+            </span>
+          )}
+        </h3>
         {item.score && <p>Score: {item.score}</p>}
         {item.episodes && <p>Episodes: {item.episodes}</p>}
         {item.chapters && <p>Chapters: {item.chapters}</p>}

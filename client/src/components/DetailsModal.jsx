@@ -97,10 +97,26 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType }) =>
   return (
     <div className="modal-overlay" onClick={onClose}>
       <div className="modal-content details-modal" onClick={(e) => e.stopPropagation()}>
-        <h2>{item.title} - Details</h2>
+        <h2>
+          {item.title_english || item.title}
+          {item.title_english && item.title && item.title_english !== item.title && (
+            <span style={{ display: 'block', fontSize: '0.8em', fontWeight: 'normal', marginTop: '0.2em' }}>
+              ({item.title})
+            </span>
+          )}
+           - Details
+        </h2>
         
         <div className="details-content">
-          {item.coverImage && <img src={item.coverImage} alt={`${item.title} cover`} className="details-modal-image" />}
+          {item.coverImage && <img
+            src={item.coverImage}
+            alt={
+              item.title_english
+                ? (item.title && item.title_english !== item.title ? `${item.title_english} (${item.title}) cover` : `${item.title_english} cover`)
+                : `${item.title} cover`
+            }
+            className="details-modal-image"
+          />}
           <div className="details-text">
             <p><strong>Synopsis:</strong> {item.synopsis || 'N/A'}</p>
             <hr />

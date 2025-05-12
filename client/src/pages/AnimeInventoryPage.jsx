@@ -38,6 +38,7 @@ const AnimeInventoryPage = () => {
         const formattedAnime = result.data.map(anime => ({
           id: anime._id,
           title: anime.title,
+          title_english: anime.title_english,
           userStatus: anime.userStatus,
           progress: `Episode ${anime.episodesWatched}/${anime.totalEpisodes || '?'}`,
           userScore: anime.userScore,

@@ -38,6 +38,7 @@ const MangaInventoryPage = () => {
         const formattedManga = result.data.map(manga => ({
           id: manga._id,
           title: manga.title,
+          title_english: manga.title_english,
           // Assuming backend model uses userStatus, userScore, userNotes
           status: manga.userStatus, // For display consistency if needed, or use manga.userStatus directly
           progress: `Chapter ${manga.chaptersRead}/${manga.totalChapters || '?'}`,
