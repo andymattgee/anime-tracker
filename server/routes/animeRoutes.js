@@ -1,6 +1,6 @@
 const express = require('express');
 const Anime = require('../models/Anime');
-const { createAnime, getAllAnime, deleteAnime, updateAnime } = require('../controllers/animeController');
+const { createAnime, getAllAnime, deleteAnime, updateAnime, deleteBulkAnime } = require('../controllers/animeController');
 
 const router = express.Router();
 
@@ -12,6 +12,9 @@ router.get('/', getAllAnime);
 
 // Route to update an anime entry
 router.put('/:id', updateAnime);
+
+// Route to delete multiple anime entries
+router.delete('/bulk-delete', deleteBulkAnime);
 
 // Route to delete an anime entry
 router.delete('/:id', deleteAnime);

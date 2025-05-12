@@ -12,6 +12,8 @@ const MangaInventoryPage = () => {
   const [error, setError] = useState(null);
   // const [editingManga, setEditingManga] = useState(null); // No longer needed
   const [viewingDetailsId, setViewingDetailsId] = useState(null);
+  const [selectedMangaIds, setSelectedMangaIds] = useState(new Set());
+  const [isSelectModeActive, setIsSelectModeActive] = useState(false);
   // const [editMangaForm, setEditMangaForm] = useState({ // Form state will be managed by DetailsModal
   //   chaptersRead: '',
   //   userStatus: '',
@@ -91,6 +93,58 @@ const MangaInventoryPage = () => {
     }
   };
 
+  const handleToggleSelectManga = (mangaId) => {
+    setSelectedMangaIds(prevSelectedIds => {
+      const newSelectedIds = new Set(prevSelectedIds);
+      if (newSelectedIds.has(mangaId)) {
+        newSelectedIds.delete(mangaId);
+      } else {
+        newSelectedIds.add(mangaId);
+      }
+      return newSelectedIds;
+    });
+  };
+
+  const toggleSelectMode = () => {
+    setIsSelectModeActive(prevMode => {
+      if (prevMode) { // If turning off select mode
+        setSelectedMangaIds(new Set()); // Clear selections
+      }
+      return !prevMode;
+    });
+  };
+
+  const handleBulkDeleteManga = async () => {
+    if (selectedMangaIds.size === 0) {
+      alert("No manga selected for deletion.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete ${selectedMangaIds.size} selected manga entries?`)) {
+      try {
+        const idsToDelete = Array.from(selectedMangaIds);
+        const response = await fetch(`http://localhost:5001/api/manga/bulk-delete`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ids: idsToDelete }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          setMangaList(prevList => prevList.filter(manga => !idsToDelete.includes(manga.id)));
+          setSelectedMangaIds(new Set()); // Clear selection
+          setIsSelectModeActive(false); // Exit select mode after deletion
+          alert(`${result.deletedCount} manga entries deleted successfully.`);
+        } else {
+          throw new Error(result.message || 'Failed to bulk delete manga');
+        }
+      } catch (err) {
+        console.error('Error bulk deleting manga:', err);
+        setError(err.message);
+      }
+    }
+  };
+
   const handleSaveChanges = async (mangaId, updatedData) => {
     // updatedData from DetailsModal contains { chaptersRead, userStatus, userScore, userNotes }
     try {
@@ -155,12 +209,30 @@ const MangaInventoryPage = () => {
 
     return (
       <>
+        <div className="inventory-controls" style={{ marginBottom: '20px', textAlign: 'right' }}>
+          <button onClick={toggleSelectMode} className={`btn ${isSelectModeActive ? 'btn-warning' : 'btn-primary'}`}>
+            {isSelectModeActive ? 'Cancel Selection' : 'Select Items to Delete'}
+          </button>
+          {isSelectModeActive && selectedMangaIds.size > 0 && (
+            <button onClick={handleBulkDeleteManga} className="btn btn-danger" style={{ marginLeft: '10px' }}>
+              Delete Selected ({selectedMangaIds.size})
+            </button>
+          )}
+        </div>
         <div className="results-grid">
           {mangaList.map((item) => (
             <MediaCard
               key={item.id}
               item={item} // Pass the manga item
-              onClick={() => setViewingDetailsId(item.id)}
+              onClick={() => {
+                if (isSelectModeActive) {
+                  handleToggleSelectManga(item.id);
+                } else {
+                  setViewingDetailsId(item.id);
+                }
+              }}
+              isSelected={selectedMangaIds.has(item.id)}
+              onSelectToggle={isSelectModeActive ? handleToggleSelectManga : undefined}
             />
           ))}
         </div>

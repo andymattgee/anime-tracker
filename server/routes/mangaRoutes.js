@@ -14,6 +14,9 @@ router.get('/:id', mangaController.getMangaById);
 // Update a manga
 router.put('/:id', mangaController.updateManga);
 
+// Delete multiple manga entries
+router.delete('/bulk-delete', mangaController.deleteBulkManga);
+
 // Delete a manga
 router.delete('/:id', mangaController.deleteManga);
 

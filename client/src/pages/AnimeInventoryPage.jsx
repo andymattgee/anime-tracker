@@ -12,6 +12,8 @@ const AnimeInventoryPage = () => {
   const [error, setError] = useState(null);
   // const [editingAnime, setEditingAnime] = useState(null); // No longer needed
   const [viewingDetailsId, setViewingDetailsId] = useState(null);
+  const [selectedAnimeIds, setSelectedAnimeIds] = useState(new Set());
+  const [isSelectModeActive, setIsSelectModeActive] = useState(false);
   // const [editForm, setEditForm] = useState({ // Form state will be managed by DetailsModal or passed directly
   //   episodesWatched: '',
   //   userStatus: '',
@@ -87,6 +89,58 @@ const AnimeInventoryPage = () => {
     }
   };
 
+  const handleToggleSelectAnime = (animeId) => {
+    setSelectedAnimeIds(prevSelectedIds => {
+      const newSelectedIds = new Set(prevSelectedIds);
+      if (newSelectedIds.has(animeId)) {
+        newSelectedIds.delete(animeId);
+      } else {
+        newSelectedIds.add(animeId);
+      }
+      return newSelectedIds;
+    });
+  };
+
+  const toggleSelectMode = () => {
+    setIsSelectModeActive(prevMode => {
+      if (prevMode) { // If turning off select mode
+        setSelectedAnimeIds(new Set()); // Clear selections
+      }
+      return !prevMode;
+    });
+  };
+
+  const handleBulkDeleteAnime = async () => {
+    if (selectedAnimeIds.size === 0) {
+      alert("No anime selected for deletion.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete ${selectedAnimeIds.size} selected anime entries?`)) {
+      try {
+        const idsToDelete = Array.from(selectedAnimeIds);
+        const response = await fetch(`http://localhost:5001/api/anime/bulk-delete`, {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ ids: idsToDelete }),
+        });
+        const result = await response.json();
+        if (result.success) {
+          setAnimeList(prevList => prevList.filter(anime => !idsToDelete.includes(anime.id)));
+          setSelectedAnimeIds(new Set()); // Clear selection
+          setIsSelectModeActive(false); // Exit select mode after deletion
+          alert(`${result.deletedCount} anime entries deleted successfully.`);
+        } else {
+          throw new Error(result.message || 'Failed to bulk delete anime');
+        }
+      } catch (err) {
+        console.error('Error bulk deleting anime:', err);
+        setError(err.message);
+      }
+    }
+  };
+
   // handleEditAnime is no longer needed here as DetailsModal handles its edit state.
   // The onEdit prop for DetailsModal can be removed if not used to trigger an external state change.
   // For now, DetailsModal has an internal "Edit" button.
@@ -151,12 +205,30 @@ const AnimeInventoryPage = () => {
 
     return (
       <>
+        <div className="inventory-controls" style={{ marginBottom: '20px', textAlign: 'right' }}>
+          <button onClick={toggleSelectMode} className={`btn ${isSelectModeActive ? 'btn-warning' : 'btn-primary'}`}>
+            {isSelectModeActive ? 'Cancel Selection' : 'Select Items to Delete'}
+          </button>
+          {isSelectModeActive && selectedAnimeIds.size > 0 && (
+            <button onClick={handleBulkDeleteAnime} className="btn btn-danger" style={{ marginLeft: '10px' }}>
+              Delete Selected ({selectedAnimeIds.size})
+            </button>
+          )}
+        </div>
         <div className="results-grid">
           {animeList.map((item) => (
             <MediaCard
               key={item.id}
               item={item}
-              onClick={() => setViewingDetailsId(item.id)}
+              onClick={() => {
+                if (isSelectModeActive) {
+                  handleToggleSelectAnime(item.id);
+                } else {
+                  setViewingDetailsId(item.id);
+                }
+              }}
+              isSelected={selectedAnimeIds.has(item.id)}
+              onSelectToggle={isSelectModeActive ? handleToggleSelectAnime : undefined} // Pass toggle only in select mode
             />
           ))}
         </div>

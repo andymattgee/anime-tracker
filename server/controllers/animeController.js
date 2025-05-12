@@ -154,9 +154,41 @@ const updateAnime = async (req, res) => {
     }
 };
 
+// Delete multiple anime entries
+const deleteBulkAnime = async (req, res) => {
+    try {
+        const { ids } = req.body; // Expect an array of IDs
+
+        if (!ids || !Array.isArray(ids) || ids.length === 0) {
+            return res.status(400).json({ success: false, message: 'No anime IDs provided for deletion.' });
+        }
+
+        const result = await Anime.deleteMany({ _id: { $in: ids } });
+
+        if (result.deletedCount === 0) {
+            return res.status(404).json({ success: false, message: 'No matching anime entries found for deletion.' });
+        }
+
+        res.status(200).json({
+            success: true,
+            message: `${result.deletedCount} anime entries successfully deleted.`,
+            deletedCount: result.deletedCount
+        });
+
+    } catch (error) {
+        console.error('Error bulk deleting anime:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Failed to bulk delete anime entries.',
+            error: error.message
+        });
+    }
+};
+
 module.exports = {
     createAnime,
     getAllAnime,
     deleteAnime,
-    updateAnime
+    updateAnime,
+    deleteBulkAnime
 };

@@ -1,6 +1,6 @@
 import React from 'react';
 
-const MediaCard = ({ item, onClick, children }) => {
+const MediaCard = ({ item, onClick, children, isSelected, onSelectToggle }) => {
   // Determine if the item is anime or manga to display relevant info
   // This assumes 'userStatus' and 'apiScore' are common or adaptable.
   // If manga uses 'status' and 'rating' as in MangaInventoryPage,
@@ -15,7 +15,22 @@ const MediaCard = ({ item, onClick, children }) => {
   const displayCommunityScore = item.apiScore;
 
   return (
-    <div key={item.id || item.mal_id} className="result-card">
+    <div
+      key={item.id || item.mal_id}
+      className={`result-card ${isSelected ? 'selected' : ''}`}
+      style={isSelected ? { border: '2px solid #007bff', boxShadow: '0 0 10px rgba(0,123,255,0.5)' } : {}}
+    >
+      {onSelectToggle && (
+        <input
+          type="checkbox"
+          checked={isSelected}
+          onChange={(e) => {
+            e.stopPropagation(); // Prevent card click when toggling checkbox
+            onSelectToggle(item.id);
+          }}
+          style={{ position: 'absolute', top: '10px', right: '10px', zIndex: 1 }}
+        />
+      )}
       <div className="card-content" onClick={onClick}>
         {item.coverImage && (
           <img
