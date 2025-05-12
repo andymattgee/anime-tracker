@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
+import axios from 'axios'; // Import axios
 
-const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType }) => {
+const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRecommendationAdded }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
+  const [recommendations, setRecommendations] = useState([]);
+  const [loadingRecommendations, setLoadingRecommendations] = useState(false);
+  const [recommendationsError, setRecommendationsError] = useState(null);
+  const [recommendationAddStatus, setRecommendationAddStatus] = useState({}); // Tracks add status for each recommendation
 
   useEffect(() => {
     if (item) {
-      const initialUserScore = item.userScore !== null && item.userScore !== undefined 
-        ? item.userScore 
+      const initialUserScore = item.userScore !== null && item.userScore !== undefined
+        ? item.userScore
         : (item.rating !== null && item.rating !== undefined ? item.rating : '');
 
       setEditForm({
@@ -17,13 +22,146 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType }) =>
         userScore: initialUserScore,
         userNotes: item.userNotes || item.notes || ''
       });
+
+      if (isOpen && item.mal_id) {
+        fetchRecommendations(mediaType, item.mal_id);
+      } else {
+        setRecommendations([]); // Clear recommendations if modal is closed or no item
+      }
+
       if (!isOpen) {
-        setIsEditing(false); 
+        setIsEditing(false);
+        setRecommendations([]);
+        setLoadingRecommendations(false);
+        setRecommendationsError(null);
+        setRecommendationAddStatus({});
       }
     } else {
-        setIsEditing(false); 
+      setIsEditing(false);
+      setRecommendations([]);
+      setLoadingRecommendations(false);
+      setRecommendationsError(null);
+      setRecommendationAddStatus({});
     }
-  }, [item, isOpen]);
+  }, [item, isOpen, mediaType]);
+
+  const handleAddRecommendedItemToInventory = async (recommendedItemEntry) => {
+    const recMalId = recommendedItemEntry.mal_id;
+    let recommendedItemType = 'anime'; // Default
+    if (recommendedItemEntry.url && recommendedItemEntry.url.includes('/manga/')) {
+      recommendedItemType = 'manga';
+    }
+
+    setRecommendationAddStatus(prev => ({
+      ...prev,
+      [recMalId]: { status: 'fetching_details', message: 'Fetching details...' }
+    }));
+
+    try {
+      // Introduce a delay before fetching full details
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const fullDetailsResponse = await axios.get(`https://api.jikan.moe/v4/${recommendedItemType}/${recMalId}`);
+      const itemData = fullDetailsResponse.data.data;
+
+      setRecommendationAddStatus(prev => ({
+        ...prev,
+        [recMalId]: { status: 'adding', message: 'Adding to inventory...' }
+      }));
+
+      let payload = {
+        mal_id: itemData.mal_id,
+        title: itemData.title,
+        title_english: itemData.title_english || null,
+        coverImage: itemData.images?.jpg?.image_url || null,
+        synopsis: itemData.synopsis || null,
+        apiStatus: itemData.status || null, // Jikan uses 'status' for airing/publishing status
+        apiScore: itemData.score || null,
+        source: itemData.source || null,
+        genres: itemData.genres?.map(g => g.name) || [],
+      };
+
+      let endpoint = '';
+      if (recommendedItemType === 'anime') {
+        endpoint = 'http://localhost:5001/api/anime/create';
+        payload = {
+          ...payload,
+          totalEpisodes: itemData.episodes || null,
+          trailerUrl: itemData.trailer?.url || null,
+          airedFrom: itemData.aired?.from || null,
+          airedTo: itemData.aired?.to || null,
+        };
+      } else { // manga
+        endpoint = 'http://localhost:5001/api/manga/create';
+        payload = {
+          ...payload,
+          totalChapters: itemData.chapters || null,
+          totalVolumes: itemData.volumes || null,
+          publishedFrom: itemData.published?.from || null,
+          publishedTo: itemData.published?.to || null,
+        };
+      }
+
+      const addResponse = await axios.post(endpoint, payload);
+
+      if (addResponse.data.success) {
+        setRecommendationAddStatus(prev => ({
+          ...prev,
+          [recMalId]: { status: 'added', message: `${recommendedItemType.charAt(0).toUpperCase() + recommendedItemType.slice(1)} added!` }
+        }));
+        if (onRecommendationAdded) {
+          onRecommendationAdded(); // Notify parent to refresh
+        }
+      } else {
+        throw new Error(addResponse.data.message || `Failed to add ${recommendedItemType}`);
+      }
+    } catch (err) {
+      console.error(`Error adding recommended ${recommendedItemType} ${recMalId}:`, err);
+      let message = `Error adding.`;
+      if (err.response) {
+        if (err.response.status === 409) message = 'Already in inventory.';
+        else if (err.response.status === 429) message = 'API rate limit. Try later.';
+        else if (err.response.data && err.response.data.message) message = err.response.data.message;
+      } else if (err.message) {
+        message = err.message;
+      }
+      setRecommendationAddStatus(prev => ({
+        ...prev,
+        [recMalId]: { status: 'error', message }
+      }));
+      // Optionally clear error after a few seconds
+      setTimeout(() => {
+        setRecommendationAddStatus(prev => {
+          const newStatus = { ...prev };
+          if (newStatus[recMalId]?.status === 'error') {
+            // Reset to 'idle' to allow retry, or just clear the message
+            newStatus[recMalId] = { status: 'idle', message: null };
+          }
+          return newStatus;
+        });
+      }, 4000);
+    }
+  };
+
+  const fetchRecommendations = async (type, malId) => {
+    setLoadingRecommendations(true);
+    setRecommendationsError(null);
+    setRecommendations([]);
+    try {
+      // Short delay to help with Jikan API rate limits if modals are opened rapidly
+      await new Promise(resolve => setTimeout(resolve, 300));
+      const response = await axios.get(`https://api.jikan.moe/v4/${type}/${malId}/recommendations`);
+      setRecommendations(response.data.data.slice(0, 10) || []); // Take top 10
+    } catch (err) {
+      console.error("Error fetching recommendations:", err);
+      if (err.response && err.response.status === 429) {
+        setRecommendationsError("Rate limited fetching recommendations. Please try again in a moment.");
+      } else {
+        setRecommendationsError("Could not fetch recommendations.");
+      }
+    } finally {
+      setLoadingRecommendations(false);
+    }
+  };
 
   if (!isOpen || !item) return null;
 
@@ -176,6 +314,75 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType }) =>
             <p><strong>Genres:</strong> {item.genres?.join(', ') || 'N/A'}</p>
             <p><strong>{airedLabel}:</strong> {formatDate(item.airedFrom)} to {formatDate(item.airedTo)}</p>
             {mediaType === 'anime' && item.trailerUrl && <p><strong>Trailer:</strong> <a href={item.trailerUrl} target="_blank" rel="noopener noreferrer">Watch Here</a></p>}
+            <hr />
+            <h4>Recommendations:</h4>
+            {loadingRecommendations && <p>Loading recommendations...</p>}
+            {recommendationsError && <p className="error-message" style={{color: 'red'}}>{recommendationsError}</p>}
+            {!loadingRecommendations && !recommendationsError && recommendations.length === 0 && <p>No recommendations found.</p>}
+            {!loadingRecommendations && !recommendationsError && recommendations.length > 0 && (
+              <div className="recommendations-grid" style={{ display: 'flex', overflowX: 'auto', paddingBottom: '10px', gap: '10px' }}>
+                {recommendations.map(rec => {
+                  const recMalId = rec.entry.mal_id;
+                  const currentAddStatus = recommendationAddStatus[recMalId] || { status: 'idle', message: null };
+                  let buttonText = 'Add to Inventory';
+                  let buttonDisabled = false;
+
+                  if (currentAddStatus.status === 'fetching_details') {
+                    buttonText = 'Fetching...';
+                    buttonDisabled = true;
+                  } else if (currentAddStatus.status === 'adding') {
+                    buttonText = 'Adding...';
+                    buttonDisabled = true;
+                  } else if (currentAddStatus.status === 'added') {
+                    buttonText = 'Added ✓';
+                    buttonDisabled = true;
+                  } else if (currentAddStatus.status === 'error') {
+                    buttonText = 'Error'; // Message shown below
+                    // Keep button enabled to allow retry unless it's a 409 (already exists)
+                    if (currentAddStatus.message === 'Already in inventory.') {
+                        buttonDisabled = true;
+                        buttonText = 'In Inventory';
+                    }
+                  }
+
+                  let itemTypeForButton = 'Item';
+                  if (rec.entry.url) {
+                      if (rec.entry.url.includes('/anime/')) itemTypeForButton = 'Anime';
+                      else if (rec.entry.url.includes('/manga/')) itemTypeForButton = 'Manga';
+                  }
+
+                  return (
+                    <div key={recMalId} className="recommendation-card" style={{ border: '1px solid #eee', borderRadius: '4px', padding: '10px', minWidth: '130px', textAlign: 'center', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                      <a href={rec.entry.url} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'none', color: 'inherit' }}>
+                        <img
+                          src={rec.entry.images?.jpg?.image_url}
+                          alt={rec.entry.title_english || rec.entry.title}
+                          style={{ width: '100px', height: '140px', objectFit: 'cover', borderRadius: '4px', marginBottom: '5px' }}
+                        />
+                        <p style={{ fontSize: '0.8em', margin: '5px 0', wordBreak: 'break-word', minHeight: '2.4em' }}>
+                          {rec.entry.title_english || rec.entry.title}
+                        </p>
+                      </a>
+                      <button
+                        onClick={() => handleAddRecommendedItemToInventory(rec.entry)}
+                        disabled={buttonDisabled}
+                        className={`btn btn-sm ${
+                            currentAddStatus.status === 'added' || currentAddStatus.message === 'Already in inventory.' ? 'btn-success'
+                            : currentAddStatus.status === 'error' ? 'btn-danger'
+                            : 'btn-primary'
+                        }`}
+                        style={{ fontSize: '0.75em', padding: '3px 6px', width: '100%', marginTop: 'auto' }}
+                      >
+                        {buttonText === 'Error' && currentAddStatus.message !== 'Already in inventory.' ? 'Retry Add' : buttonText === 'Add to Inventory' ? `Add to ${itemTypeForButton}` : buttonText}
+                      </button>
+                      {currentAddStatus.status === 'error' && currentAddStatus.message && currentAddStatus.message !== 'Already in inventory.' && (
+                          <p style={{ fontSize: '0.7em', color: 'red', marginTop: '3px', marginBottom: '0' }}>{currentAddStatus.message}</p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
         

@@ -253,6 +253,7 @@ const MangaInventoryPage = () => {
           onSave={handleSaveChanges} // Use the new save handler
           onDelete={handleDeleteManga}
           mediaType="manga"
+          onRecommendationAdded={fetchData} // Add this prop
         />
         {/* renderEditMangaModal() is no longer called */}
       </div>

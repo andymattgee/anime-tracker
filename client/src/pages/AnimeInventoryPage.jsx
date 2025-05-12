@@ -250,6 +250,7 @@ const AnimeInventoryPage = () => {
           onSave={handleSaveChanges} // Pass the save handler
           onDelete={handleDeleteAnime}
           mediaType="anime"
+          onRecommendationAdded={fetchData} // Add this prop
         />
         {/* renderEditAnimeModal is removed */}
       </div>
