@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Navbar from '../components/Navbar';
+import MediaCard from '../components/MediaCard'; // Import MediaCard
+import DetailsModal from '../components/DetailsModal'; // Import DetailsModal
 import './InventoryPage.css'; // We can reuse the same CSS for now
 
 const AnimeInventoryPage = () => {
@@ -183,76 +185,6 @@ const AnimeInventoryPage = () => {
     );
   };
 
-  const renderDetailsModal = () => {
-    if (!viewingDetailsId) return null;
-
-    const item = animeList.find(a => a.id === viewingDetailsId);
-
-    if (!item) return null;
-
-    const formatDate = (dateString) => {
-      if (!dateString) return 'N/A';
-      try {
-        return new Date(dateString).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-      } catch (e) {
-        return 'Invalid Date';
-      }
-    };
-
-    return (
-      <div className="modal-overlay" onClick={() => setViewingDetailsId(null)}>
-        <div className="modal-content details-modal" onClick={(e) => e.stopPropagation()}>
-          <h2>{item.title} - Details</h2>
-          <div className="details-content">
-            {item.coverImage && <img src={item.coverImage} alt={`${item.title} cover`} className="details-modal-image" />}
-            <div className="details-text">
-              <p><strong>Synopsis:</strong> {item.synopsis || 'N/A'}</p>
-              <hr />
-              <h4>Your Tracking: <span
-                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline', marginLeft: '10px' }}
-                onClick={() => handleEditAnime(item)}
-              >
-                Edit
-              </span></h4>
-              <p><strong>Status:</strong> {item.userStatus}</p>
-              <p><strong>Progress:</strong> {item.progress}</p>
-              <p><strong>Your Score:</strong> {item.userScore !== null && item.userScore !== undefined ? `${item.userScore}/10` : 'N/A'}</p>
-              <p><strong>Notes:</strong> {item.userNotes || 'None'}</p>
-              <hr />
-              <h4>General Information:</h4>
-              <p><strong>MAL ID:</strong> {item.mal_id || 'N/A'}</p>
-              <p><strong>Airing Status:</strong> {item.apiStatus || 'N/A'}</p>
-              <p><strong>Community Score:</strong> {item.apiScore || 'N/A'}</p>
-              <p><strong>Source:</strong> {item.source || 'N/A'}</p>
-              <p><strong>Genres:</strong> {item.genres?.join(', ') || 'N/A'}</p>
-              <p><strong>Aired:</strong> {formatDate(item.airedFrom)} to {formatDate(item.airedTo)}</p>
-              {item.trailerUrl && <p><strong>Trailer:</strong> <a href={item.trailerUrl} target="_blank" rel="noopener noreferrer">Watch Here</a></p>}
-            </div>
-          </div>
-          <div className="modal-actions">
-            <button
-              type="button"
-              className="btn btn-danger"
-              onClick={() => {
-                setViewingDetailsId(null);
-                handleDeleteAnime(item.id);
-              }}
-            >
-              Delete
-            </button>
-            <button
-              type="button"
-              className="btn btn-secondary"
-              onClick={() => setViewingDetailsId(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      </div>
-    );
-  };
-
   const renderContent = () => {
     if (loading) {
       return <div className="loading">Loading...</div>;
@@ -274,21 +206,11 @@ const AnimeInventoryPage = () => {
       <>
         <div className="results-grid">
           {animeList.map((item) => (
-            <div key={item.id} className="result-card">
-              <div className="card-content" onClick={() => setViewingDetailsId(item.id)}>
-                {item.coverImage && (
-                  <img
-                    src={item.coverImage}
-                    alt={`${item.title} cover`}
-                  />
-                )}
-                <h3>{item.title}</h3>
-                <div className="inventory-details">
-                  <p><strong>Status:</strong> {item.userStatus}</p>
-                  <p><strong>Community Score:</strong> {item.apiScore || 'N/A'}</p>
-                </div>
-              </div>
-            </div>
+            <MediaCard
+              key={item.id}
+              item={item}
+              onClick={() => setViewingDetailsId(item.id)}
+            />
           ))}
         </div>
       </>
@@ -301,7 +223,14 @@ const AnimeInventoryPage = () => {
       <div className="inventory-container">
         <h1>My Anime</h1>
         {renderContent()}
-        {renderDetailsModal()}
+        <DetailsModal
+          isOpen={!!viewingDetailsId}
+          onClose={() => setViewingDetailsId(null)}
+          item={animeList.find(a => a.id === viewingDetailsId)}
+          onEdit={handleEditAnime}
+          onDelete={handleDeleteAnime}
+          mediaType="anime"
+        />
         {renderEditAnimeModal()}
       </div>
     </div>
