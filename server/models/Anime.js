@@ -16,6 +16,7 @@ const animeSchema = new Schema({
   // Data primarily from Jikan API
   mal_id: { type: Number, required: true, unique: true }, // MyAnimeList ID, should be unique
   title: { type: String, required: true },
+  title_english: { type: String, required: false },
   totalEpisodes: { type: Number, required: false }, // API might not always provide this
   coverImage: { type: String, required: false },
   synopsis: { type: String, required: false },

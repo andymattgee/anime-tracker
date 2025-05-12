@@ -16,6 +16,7 @@ const mangaSchema = new Schema({
   // Data from Jikan API
   mal_id: { type: Number, required: true, unique: true },
   title: { type: String, required: true },
+  title_english: { type: String, required: false },
   totalChapters: { type: Number, required: false },
   totalVolumes: { type: Number, required: false },
   coverImage: { type: String, required: false },

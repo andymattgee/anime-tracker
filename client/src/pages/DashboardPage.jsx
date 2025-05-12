@@ -18,6 +18,10 @@ const DashboardPage = () => {
           <p style={{ fontSize: '0.9rem', color: '#495057', lineHeight: '1.6' }}>
             This is a lightweight app using the Jikan API to pull anime and manga data, allowing users to create lists and track shows and mangas they are currently enjoying. This project serves as a practical exercise to reinforce MERN stack knowledge and to gain experience working with a third-party API in depth.
           </p>
+          <br />
+          <p>
+            To add anime or manga to your list, search for the show or manga in the Explore page and click the "Add to List" button.
+          </p>
         </section>
         <section className="stats-section">
           <h2>My Stats</h2>

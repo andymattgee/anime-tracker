@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
   import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
@@ -12,7 +12,15 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(false); // Loading state for the search
   const [error, setError] = useState(null); // Error state for handling API errors
   const [addStatus, setAddStatus] = useState({}); // Status of adding items to inventory
+
+  // State for predictive search suggestions
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false); // Controls visibility of suggestions
   
+  // Ref for the search input wrapper
+  const searchWrapperRef = useRef(null);
+
   // New state variables for top anime and manga
   const [topAnime, setTopAnime] = useState([]);
   const [topManga, setTopManga] = useState([]);
@@ -71,33 +79,114 @@ const ExplorePage = () => {
     }
   };
 
-  // Function to handle the search form submission
-  const handleSearch = async (e) => {
-    e.preventDefault(); // Prevent default form submission behavior
-    if (!searchTerm.trim()) return; // Exit if the search term is empty
+  // Debounced effect for fetching suggestions
+  useEffect(() => {
+    const currentSearchTerm = searchTerm.trim();
 
-    setLoading(true); // Set loading state to true
+    if (!currentSearchTerm) {
+      setSuggestions([]);
+      setShowSuggestions(false); // Hide suggestions if search term is cleared
+      return;
+    }
+
+    // If main search is loading, don't fetch suggestions to avoid conflicts
+    if (loading) {
+      return;
+    }
+
+    const debounceTimer = setTimeout(async () => {
+      // Ensure the term hasn't changed during the debounce period
+      if (searchTerm.trim() === currentSearchTerm) {
+        setLoadingSuggestions(true);
+        try {
+          const response = await axios.get(
+            `https://api.jikan.moe/v4/${searchType}?q=${encodeURIComponent(currentSearchTerm)}&limit=7` // Fetch 7 suggestions
+          );
+          // Only update suggestions if the search term is still the same
+          if (searchTerm.trim() === currentSearchTerm) {
+            setSuggestions(response.data.data || []);
+          }
+        } catch (err) {
+          console.error("Error fetching suggestions:", err);
+          if (searchTerm.trim() === currentSearchTerm) {
+            setSuggestions([]); // Clear suggestions on error
+          }
+        } finally {
+          if (searchTerm.trim() === currentSearchTerm) {
+            setLoadingSuggestions(false);
+          }
+        }
+      }
+    }, 300); // 300ms debounce time
+
+    return () => clearTimeout(debounceTimer); // Cleanup timer
+  }, [searchTerm, searchType, loading]); // Re-run on searchTerm, searchType, or main loading state change
+
+  // Function to execute the main search (for full results)
+  const executeSearch = async (termToSearch, typeToSearch) => {
+    if (!termToSearch.trim()) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true); // Set main loading state to true
     setError(null); // Reset any previous errors
-    setResults([]); // Clear previous results
+    setResults([]); // Clear previous main results
+    // setSuggestions([]); // Suggestions are cleared by setShowSuggestions(false) or naturally
+    setShowSuggestions(false); // Hide suggestions when a main search is performed
 
-    // Construct the API URL for the Jikan API based on the search type
-    const JIKAN_API_URL = `https://api.jikan.moe/v4/${searchType}?q=${encodeURIComponent(searchTerm)}&limit=20`;
+    const JIKAN_API_URL = `https://api.jikan.moe/v4/${typeToSearch}?q=${encodeURIComponent(termToSearch)}&limit=20`;
 
     try {
-      // Fetch data from the Jikan API
       const response = await axios.get(JIKAN_API_URL);
-      setResults(response.data.data || []); // Set results to the data returned from the API
+      setResults(response.data.data || []);
     } catch (err) {
-      console.error("Error fetching data from Jikan API:", err);
-      setError(`Failed to fetch ${searchType}. Please try again.`); // Set error message
-      // Handle specific errors if needed (e.g., rate limiting 429)
+      console.error(`Error fetching data for ${typeToSearch} from Jikan API:`, err);
+      setError(`Failed to fetch ${typeToSearch}. Please try again.`);
       if (err.response && err.response.status === 429) {
         setError('Rate limited by Jikan API. Please wait a moment and try again.');
       }
+      setResults([]); // Clear results on error
     } finally {
-      setLoading(false); // Reset loading state
+      setLoading(false); // Reset main loading state
     }
   };
+ 
+  // Function to handle the search form submission
+  const handleSearch = (e) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    setShowSuggestions(false); // Hide suggestions on form submit
+    executeSearch(searchTerm, searchType);
+  };
+
+  // Function to handle clicking a suggestion
+  const handleSuggestionClick = (suggestion) => {
+    const clickedTerm = suggestion.title;
+    setSearchTerm(clickedTerm); // Update the input field
+    // setSuggestions([]); // No longer needed, setShowSuggestions(false) handles hiding
+    setShowSuggestions(false); // Hide suggestions after click
+    executeSearch(clickedTerm, searchType); // Perform a full search for the clicked item
+  };
+
+  // Effect to handle clicks outside the search wrapper to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSuggestions]);
 
   // Function to handle adding an item (anime or manga) to the inventory
   const handleAddItemToInventory = async (itemData, type = searchType) => {
@@ -193,13 +282,60 @@ const ExplorePage = () => {
         <h1>Explore Anime & Manga</h1>
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-controls">
-            <input
-              type="text"
-              placeholder={`Search for ${searchType}...`}
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)} // Update search term on input change
-              className="search-input"
-            />
+            <div className="search-input-wrapper" ref={searchWrapperRef}>
+              <input
+                type="text"
+                placeholder={`Search for ${searchType}...`}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.trim()) {
+                    setShowSuggestions(true); // Show suggestions when user types
+                  } else {
+                    setShowSuggestions(false); // Hide if input is cleared
+                  }
+                }}
+                onFocus={() => {
+                  // Show suggestions on focus if there's text and (either suggestions exist or loading is not for main search)
+                  if (searchTerm.trim() && (suggestions.length > 0 || !loading)) {
+                     setShowSuggestions(true);
+                  } else if (searchTerm.trim()) {
+                    // If there's a search term but no suggestions yet (e.g., after a full search cleared them, or initial focus),
+                    // still set to true to allow the debounced effect to fetch them if applicable.
+                    setShowSuggestions(true);
+                  }
+                }}
+                className="search-input"
+                autoComplete="off" // Disable browser's default autocomplete
+              />
+              {/* Suggestions Dropdown */}
+              {showSuggestions && searchTerm.trim() && !loading && (
+                <ul className="suggestions-list">
+                  {loadingSuggestions && <li className="suggestion-item-loading">Loading...</li>}
+                  {!loadingSuggestions && suggestions.length > 0 && suggestions.map((suggestion) => (
+                    <li
+                      key={suggestion.mal_id}
+                      className="suggestion-item"
+                      // Using onMouseDown to ensure click registers before input blur hides list
+                      onMouseDown={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion.images?.jpg?.small_image_url && (
+                        <img
+                          src={suggestion.images.jpg.small_image_url}
+                          alt={suggestion.title}
+                          className="suggestion-thumbnail"
+                        />
+                      )}
+                      <span>{suggestion.title}</span>
+                    </li>
+                  ))}
+                  {/* Show "No suggestions found" only if not loading suggestions, suggestions array is empty, and there is a search term */}
+                  {!loadingSuggestions && suggestions.length === 0 && searchTerm.trim() && (
+                     <li className="suggestion-item-none">No suggestions found.</li>
+                  )}
+                </ul>
+              )}
+            </div>
             <select
               value={searchType}
               onChange={(e) => setSearchType(e.target.value)} // Update search type on selection change
