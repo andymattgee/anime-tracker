@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
+import InventoryPageCard from '../components/InventoryPageCard'; // Import the InventoryPageCard component
 import './ExplorePage.css'; // Import the CSS file
 
 const ExplorePage = () => {
@@ -185,33 +186,6 @@ const ExplorePage = () => {
     }
   };
 
-  // Common card component for rendering anime/manga items
-  const renderItemCard = (item, type) => (
-    <div key={item.mal_id} className="result-card">
-      <a href={item.url} target="_blank" rel="noopener noreferrer">
-        <img src={item.images?.jpg?.image_url} alt={item.title} />
-        <h3>{item.title}</h3>
-        {item.score && <p>Score: {item.score}</p>} {/* Display score if available */}
-        {item.episodes && <p>Episodes: {item.episodes}</p>} {/* Display episodes if available */}
-        {item.chapters && <p>Chapters: {item.chapters}</p>} {/* Display chapters if available */}
-      </a>
-      {/* Button to add item to inventory */}
-      <button
-        className={`add-inventory-button ${addStatus[item.mal_id]?.status || ''}`}
-        onClick={() => handleAddItemToInventory(item, type)} // Call function to add item to inventory
-        disabled={addStatus[item.mal_id]?.status === 'adding' || addStatus[item.mal_id]?.status === 'added'} // Disable button if adding or already added
-      >
-        {addStatus[item.mal_id]?.status === 'adding' ? `Adding ${type}...` :
-         addStatus[item.mal_id]?.status === 'added' ? `${type.charAt(0).toUpperCase() + type.slice(1)} Added ✓` :
-         addStatus[item.mal_id]?.status === 'error' ? 'Error' :
-         `Add to ${type.charAt(0).toUpperCase() + type.slice(1)} Inventory`}
-      </button>
-      {addStatus[item.mal_id]?.status === 'error' && (
-        <p className="add-error-message">{addStatus[item.mal_id]?.message}</p> // Display error message if adding failed
-      )}
-    </div>
-  );
-
   return (
     <> {/* Use a Fragment to wrap multiple elements */}
       <Navbar /> {/* Render the Navbar */}
@@ -247,7 +221,15 @@ const ExplorePage = () => {
           <div className="search-results-section">
             <h2>Search Results</h2>
             <div className="results-grid">
-              {results.map((item) => renderItemCard(item, searchType))}
+              {results.map((item) => (
+                <InventoryPageCard
+                  key={item.mal_id}
+                  item={item}
+                  type={searchType}
+                  addStatus={addStatus}
+                  handleAddItemToInventory={handleAddItemToInventory}
+                />
+              ))}
             </div>
           </div>
         ) : (
@@ -264,7 +246,15 @@ const ExplorePage = () => {
                 <p>Loading top anime...</p>
               ) : (
                 <div className="results-grid">
-                  {topAnime.map(anime => renderItemCard(anime, 'anime'))}
+                  {topAnime.map(anime => (
+                    <InventoryPageCard
+                      key={anime.mal_id}
+                      item={anime}
+                      type="anime"
+                      addStatus={addStatus}
+                      handleAddItemToInventory={handleAddItemToInventory}
+                    />
+                  ))}
                 </div>
               )}
             </div>
@@ -276,7 +266,15 @@ const ExplorePage = () => {
                 <p>Loading top manga...</p>
               ) : (
                 <div className="results-grid">
-                  {topManga.map(manga => renderItemCard(manga, 'manga'))}
+                  {topManga.map(manga => (
+                    <InventoryPageCard
+                      key={manga.mal_id}
+                      item={manga}
+                      type="manga"
+                      addStatus={addStatus}
+                      handleAddItemToInventory={handleAddItemToInventory}
+                    />
+                  ))}
                 </div>
               )}
             </div>
