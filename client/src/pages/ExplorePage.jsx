@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
-import InventoryPageCard from '../components/InventoryPageCard'; // Import the InventoryPageCard component
+  import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
 import './ExplorePage.css'; // Import the CSS file
 
 const ExplorePage = () => {
@@ -222,7 +222,7 @@ const ExplorePage = () => {
             <h2>Search Results</h2>
             <div className="results-grid">
               {results.map((item) => (
-                <InventoryPageCard
+                <ExplorePageCard
                   key={item.mal_id}
                   item={item}
                   type={searchType}
@@ -247,7 +247,7 @@ const ExplorePage = () => {
               ) : (
                 <div className="results-grid">
                   {topAnime.map(anime => (
-                    <InventoryPageCard
+                    <ExplorePageCard
                       key={anime.mal_id}
                       item={anime}
                       type="anime"
@@ -267,7 +267,7 @@ const ExplorePage = () => {
               ) : (
                 <div className="results-grid">
                   {topManga.map(manga => (
-                    <InventoryPageCard
+                    <ExplorePageCard
                       key={manga.mal_id}
                       item={manga}
                       type="manga"

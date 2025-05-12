@@ -1,6 +1,6 @@
 import React from 'react';
 
-const InventoryPageCard = ({ item, type, addStatus, handleAddItemToInventory, children }) => {
+const ExplorePageCard = ({ item, type, addStatus, handleAddItemToInventory, children }) => {
   return (
     <div key={item.mal_id} className="result-card">
       <a href={item.url} target="_blank" rel="noopener noreferrer">
@@ -28,4 +28,4 @@ const InventoryPageCard = ({ item, type, addStatus, handleAddItemToInventory, ch
   );
 };
 
-export default InventoryPageCard;
+export default ExplorePageCard;
