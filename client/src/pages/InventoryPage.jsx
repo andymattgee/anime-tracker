@@ -286,8 +286,8 @@ const InventoryPage = () => {
     if (!editingAnime) return null;
 
     return (
-      <div className="modal-overlay">
-        <div className="modal-content">
+      <div className="modal-overlay" onClick={() => setEditingAnime(null)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <h2>Edit Anime Entry - {editingAnime.title}</h2>
           <form onSubmit={handleEditAnimeSubmit}>
             {/* Episodes Watched */}
@@ -330,8 +330,8 @@ const InventoryPage = () => {
     if (!editingManga) return null;
 
     return (
-      <div className="modal-overlay">
-        <div className="modal-content">
+      <div className="modal-overlay" onClick={() => setEditingManga(null)}>
+        <div className="modal-content" onClick={(e) => e.stopPropagation()}>
           <h2>Edit Manga Entry</h2>
           <form onSubmit={handleEditMangaSubmit}>
              {/* Title */}
@@ -421,7 +421,14 @@ const InventoryPage = () => {
             <div className="details-text">
               <p><strong>Synopsis:</strong> {item.synopsis || 'N/A'}</p>
               <hr />
-              <h4>Your Tracking:</h4>
+              <h4>Your Tracking: <span
+                style={{ cursor: 'pointer', color: 'blue', textDecoration: 'underline', marginLeft: '10px' }}
+                onClick={() => {
+                  isAnime ? handleEditAnime(item) : handleEditManga(item);
+                }}
+              >
+                Edit
+              </span></h4>
               <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
               <p><strong>Progress:</strong> {item.progress}</p>
               <p><strong>Your Score:</strong> {(isAnime ? item.userScore : item.rating) !== null && (isAnime ? item.userScore : item.rating) !== undefined ? `${isAnime ? item.userScore : item.rating}/10` : 'N/A'}</p>
@@ -440,7 +447,21 @@ const InventoryPage = () => {
             </div>
           </div>
           <div className="modal-actions">
-            <button type="button" className="btn btn-secondary" onClick={() => setViewingDetailsId(null)}>
+            <button
+              type="button"
+              className="btn btn-danger"
+              onClick={() => {
+                setViewingDetailsId(null);
+                isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id);
+              }}
+            >
+              Delete
+            </button>
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={() => setViewingDetailsId(null)}
+            >
               Close
             </button>
           </div>
@@ -473,33 +494,21 @@ const InventoryPage = () => {
 
     return (
       <>
-        <div className="inventory-grid">
+        <div className="results-grid">
           {list.map((item) => (
-            <div key={item.id} className="inventory-card" onClick={() => setViewingDetailsId(item.id)} style={{ cursor: 'pointer' }}>
-              {item.coverImage && (
-                <img src={item.coverImage} alt={`${item.title} cover`} className="inventory-card-image" />
-              )}
-              <h3>{item.title}</h3>
-              <div className="inventory-details">
-                 {/* Display user status for anime, original status for manga */}
-                <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
-                <p><strong>Progress:</strong> {item.progress}</p>
-                 {/* Display user score for anime, original rating for manga */}
-                <p><strong>Rating:</strong> {(isAnime ? item.userScore : item.rating) !== null && (isAnime ? item.userScore : item.rating) !== undefined ? `${isAnime ? item.userScore : item.rating}/10` : 'N/A'}</p>
-              </div>
-              <div className="inventory-actions">
-                <button
-                  className="btn btn-primary"
-                  onClick={(e) => { e.stopPropagation(); isAnime ? handleEditAnime(item) : handleEditManga(item); }}
-                >
-                  Edit
-                </button>
-                <button
-                  className="btn btn-secondary"
-                  onClick={(e) => { e.stopPropagation(); isAnime ? handleDeleteAnime(item.id) : handleDeleteManga(item.id); }}
-                >
-                  Delete
-                </button>
+            <div key={item.id} className="result-card">
+              <div className="card-content" onClick={() => setViewingDetailsId(item.id)}>
+                {item.coverImage && (
+                  <img 
+                    src={item.coverImage} 
+                    alt={`${item.title} cover`} 
+                  />
+                )}
+                <h3>{item.title}</h3>
+                <div className="inventory-details">
+                  <p><strong>Status:</strong> {isAnime ? item.userStatus : item.status}</p>
+                  <p><strong>Community Score:</strong> {item.apiScore || 'N/A'}</p>
+                </div>
               </div>
             </div>
           ))}
@@ -527,9 +536,9 @@ const InventoryPage = () => {
           </button>
         </div>
         {renderContent()}
+        {renderDetailsModal()}
         {renderEditAnimeModal()}
         {renderEditMangaModal()}
-        {renderDetailsModal()} {/* Call the new details modal here */}
       </div>
     </div>
   );

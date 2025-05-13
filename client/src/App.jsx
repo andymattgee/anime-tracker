@@ -5,26 +5,51 @@ import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import DashboardPage from './pages/DashboardPage';
-import InventoryPage from './pages/InventoryPage';
-
+import AnimeInventoryPage from './pages/AnimeInventoryPage';
+import MangaInventoryPage from './pages/MangaInventoryPage';
 import ExplorePage from './pages/ExplorePage'; // Import the new Explore page
+import { AuthProvider } from './context/AuthContext';
+import PrivateRoute from './components/PrivateRoute';
 
 // Main App component that serves as the root of our React component tree
 const App = () => {
   return (
-    <Router>
-      <div className="app">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/signup" element={<SignupPage />} />
-          <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/inventory" element={<InventoryPage />} />
-         
-          <Route path="/explore" element={<ExplorePage />} /> {/* Add route for Explore page */}
-        </Routes>
-      </div>
-    </Router>
+    <AuthProvider>
+      <Router>
+        <div className="app">
+          <Routes>
+            <Route path="/" element={<LandingPage />} />
+            <Route path="/login" element={<LoginPage />} />
+            <Route path="/signup" element={<SignupPage />} />
+            <Route 
+              path="/dashboard" 
+              element={
+                <PrivateRoute>
+                  <DashboardPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-anime" 
+              element={
+                <PrivateRoute>
+                  <AnimeInventoryPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route 
+              path="/my-manga" 
+              element={
+                <PrivateRoute>
+                  <MangaInventoryPage />
+                </PrivateRoute>
+              } 
+            />
+            <Route path="/explore" element={<ExplorePage />} /> {/* Add route for Explore page */}
+          </Routes>
+        </div>
+      </Router>
+    </AuthProvider>
   );
 };
 

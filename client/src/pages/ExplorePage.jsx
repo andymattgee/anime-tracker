@@ -1,43 +1,220 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
+import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
 import './ExplorePage.css'; // Import the CSS file
+import { useAuth } from '../context/AuthContext'; // Import auth context
 
 const ExplorePage = () => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [results, setResults] = useState([]);
-  const [searchType, setSearchType] = useState('anime'); // 'anime' or 'manga'
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [addStatus, setAddStatus] = useState({}); // { [mal_id]: 'adding' | 'added' | 'error', message?: string }
+  // State variables for managing search functionality
+  const [searchTerm, setSearchTerm] = useState(''); // The term to search for
+  const [results, setResults] = useState([]); // The search results from the API
+  const [searchType, setSearchType] = useState('anime'); // Type of search: 'anime' or 'manga'
+  const [loading, setLoading] = useState(false); // Loading state for the search
+  const [error, setError] = useState(null); // Error state for handling API errors
+  const [addStatus, setAddStatus] = useState({}); // Status of adding items to inventory
+  const { token, isAuthenticated } = useAuth(); // Get token from auth context
 
-  const handleSearch = async (e) => {
-    e.preventDefault();
-    if (!searchTerm.trim()) return;
+  // State for predictive search suggestions
+  const [suggestions, setSuggestions] = useState([]);
+  const [loadingSuggestions, setLoadingSuggestions] = useState(false);
+  const [showSuggestions, setShowSuggestions] = useState(false); // Controls visibility of suggestions
+  
+  // Ref for the search input wrapper
+  const searchWrapperRef = useRef(null);
 
-    setLoading(true);
-    setError(null);
-    setResults([]); // Clear previous results
+  // New state variables for top anime and manga
+  const [topAnime, setTopAnime] = useState([]);
+  const [topManga, setTopManga] = useState([]);
+  const [loadingTop, setLoadingTop] = useState({ anime: false, manga: false });
 
-    const JIKAN_API_URL = `https://api.jikan.moe/v4/${searchType}?q=${encodeURIComponent(searchTerm)}&limit=20`;
+  // Modified useEffect with staggered API requests
+  useEffect(() => {
+    // Fetch top anime first
+    fetchTopAnime().then(() => {
+      // Wait 1 second before fetching manga to avoid rate limiting
+      setTimeout(() => {
+        fetchTopManga();
+      }, 1000);
+    });
+  }, []);
 
+  // Function to fetch top anime from Jikan API
+  const fetchTopAnime = async () => {
+    setLoadingTop(prev => ({ ...prev, anime: true }));
     try {
-      const response = await axios.get(JIKAN_API_URL);
-      setResults(response.data.data || []); // Jikan API wraps results in a 'data' object
+      const response = await axios.get('https://api.jikan.moe/v4/top/anime?limit=25');
+      setTopAnime(response.data.data || []);
+      return true;
     } catch (err) {
-      console.error("Error fetching data from Jikan API:", err);
-      setError(`Failed to fetch ${searchType}. Please try again.`);
-      // Handle specific errors if needed (e.g., rate limiting 429)
+      console.error("Error fetching top anime:", err);
+      // Handle rate limiting with exponential backoff
       if (err.response && err.response.status === 429) {
-        setError('Rate limited by Jikan API. Please wait a moment and try again.');
+        console.log("Rate limited, retrying after delay...");
+        // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return fetchTopAnime(); // Retry the request
       }
+      return false;
     } finally {
-      setLoading(false);
+      setLoadingTop(prev => ({ ...prev, anime: false }));
     }
   };
 
-  // Function to handle adding item (anime or manga) to inventory
-  const handleAddItemToInventory = async (itemData) => {
+  // Function to fetch top manga from Jikan API
+  const fetchTopManga = async () => {
+    setLoadingTop(prev => ({ ...prev, manga: true }));
+    try {
+      const response = await axios.get('https://api.jikan.moe/v4/top/manga?limit=25');
+      setTopManga(response.data.data || []);
+    } catch (err) {
+      console.error("Error fetching top manga:", err);
+      // Handle rate limiting with exponential backoff
+      if (err.response && err.response.status === 429) {
+        console.log("Rate limited, retrying after delay...");
+        // Wait 2 seconds before retrying
+        await new Promise(resolve => setTimeout(resolve, 2000));
+        return fetchTopManga(); // Retry the request
+      }
+    } finally {
+      setLoadingTop(prev => ({ ...prev, manga: false }));
+    }
+  };
+
+  // Debounced effect for fetching suggestions
+  useEffect(() => {
+    const currentSearchTerm = searchTerm.trim();
+
+    if (!currentSearchTerm) {
+      setSuggestions([]);
+      setShowSuggestions(false); // Hide suggestions if search term is cleared
+      return;
+    }
+
+    // If main search is loading, don't fetch suggestions to avoid conflicts
+    if (loading) {
+      return;
+    }
+
+    const debounceTimer = setTimeout(async () => {
+      // Ensure the term hasn't changed during the debounce period
+      if (searchTerm.trim() === currentSearchTerm) {
+        setLoadingSuggestions(true);
+        try {
+          const response = await axios.get(
+            `https://api.jikan.moe/v4/${searchType}?q=${encodeURIComponent(currentSearchTerm)}&limit=7` // Fetch 7 suggestions
+          );
+          // Only update suggestions if the search term is still the same
+          if (searchTerm.trim() === currentSearchTerm) {
+            setSuggestions(response.data.data || []);
+          }
+        } catch (err) {
+          console.error("Error fetching suggestions:", err);
+          if (searchTerm.trim() === currentSearchTerm) {
+            setSuggestions([]); // Clear suggestions on error
+          }
+        } finally {
+          if (searchTerm.trim() === currentSearchTerm) {
+            setLoadingSuggestions(false);
+          }
+        }
+      }
+    }, 300); // 300ms debounce time
+
+    return () => clearTimeout(debounceTimer); // Cleanup timer
+  }, [searchTerm, searchType, loading]); // Re-run on searchTerm, searchType, or main loading state change
+
+  // Function to execute the main search (for full results)
+  const executeSearch = async (termToSearch, typeToSearch) => {
+    if (!termToSearch.trim()) {
+      setResults([]);
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true); // Set main loading state to true
+    setError(null); // Reset any previous errors
+    setResults([]); // Clear previous main results
+    // setSuggestions([]); // Suggestions are cleared by setShowSuggestions(false) or naturally
+    setShowSuggestions(false); // Hide suggestions when a main search is performed
+
+    const JIKAN_API_URL = `https://api.jikan.moe/v4/${typeToSearch}?q=${encodeURIComponent(termToSearch)}&limit=20`;
+
+    try {
+      const response = await axios.get(JIKAN_API_URL);
+      setResults(response.data.data || []);
+    } catch (err) {
+      console.error(`Error fetching data for ${typeToSearch} from Jikan API:`, err);
+      setError(`Failed to fetch ${typeToSearch}. Please try again.`);
+      if (err.response && err.response.status === 429) {
+        setError('Rate limited by Jikan API. Please wait a moment and try again.');
+      }
+      setResults([]); // Clear results on error
+    } finally {
+      setLoading(false); // Reset main loading state
+    }
+  };
+ 
+  // Function to handle the search form submission
+  const handleSearch = (e) => {
+    e.preventDefault(); // Prevent default form submission behavior
+    setShowSuggestions(false); // Hide suggestions on form submit
+    executeSearch(searchTerm, searchType);
+  };
+
+  // Function to handle clicking a suggestion
+  const handleSuggestionClick = (suggestion) => {
+    const mainTitle = suggestion.title;
+    const englishTitle = suggestion.title_english;
+    let displayTerm = mainTitle;
+    if (englishTitle && englishTitle !== mainTitle) {
+      displayTerm = `${mainTitle} / ${englishTitle}`;
+    }
+    setSearchTerm(displayTerm); // Update the input field
+    // setSuggestions([]); // No longer needed, setShowSuggestions(false) handles hiding
+    setShowSuggestions(false); // Hide suggestions after click
+    executeSearch(mainTitle, searchType); // Perform a full search for the main title
+  };
+
+  // Effect to handle clicks outside the search wrapper to close suggestions
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchWrapperRef.current && !searchWrapperRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    if (showSuggestions) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSuggestions]);
+
+  // Function to handle adding an item (anime or manga) to the inventory
+  const handleAddItemToInventory = async (itemData, type = searchType) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setAddStatus(prev => ({ 
+        ...prev, 
+        [itemData.mal_id]: { 
+          status: 'error', 
+          message: 'Please log in to add items to your list' 
+        } 
+      }));
+      
+      // Clear the error message after a timeout
+      setTimeout(() => {
+        setAddStatus(prev => ({ ...prev, [itemData.mal_id]: undefined }));
+      }, 3000);
+      
+      return;
+    }
+    
     const mal_id = itemData.mal_id;
     setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'adding' } }));
 
@@ -45,23 +222,19 @@ const ExplorePage = () => {
     let payload = {
       mal_id: mal_id,
       title: itemData.title,
+      title_english: itemData.title_english || null,
       coverImage: itemData.images?.jpg?.image_url || null,
       synopsis: itemData.synopsis || null,
-      apiStatus: itemData.status || null, // Jikan's 'status' field (e.g., "Finished Airing", "Publishing")
+      apiStatus: itemData.status || null,
       apiScore: itemData.score || null,
       source: itemData.source || null,
       genres: itemData.genres?.map(g => g.name) || [],
-      // User-specific fields can be defaulted by the backend or passed if needed
-      // userStatus: 'Plan to Watch/Read', // Example, backend handles defaults
-      // episodesWatched: 0,
-      // chaptersRead: 0,
-      // userScore: null,
-      // userNotes: '',
     };
 
     let endpoint = '';
 
-    if (searchType === 'anime') {
+    // Determine the endpoint and payload based on the item type
+    if (type === 'anime') {
       endpoint = 'http://localhost:5001/api/anime/create';
       payload = {
         ...payload,
@@ -75,29 +248,72 @@ const ExplorePage = () => {
       payload = {
         ...payload,
         totalChapters: itemData.chapters || null,
-        totalVolumes: itemData.volumes || null, // Jikan API provides 'volumes' for manga
-        publishedFrom: itemData.published?.from || null, // Jikan uses 'published' for manga dates
+        totalVolumes: itemData.volumes || null,
+        publishedFrom: itemData.published?.from || null,
         publishedTo: itemData.published?.to || null,
       };
     }
 
     try {
-      const response = await axios.post(endpoint, payload);
+      // Send a POST request to add the item to the inventory with the auth token
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (response.data.success) {
-        setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'added', message: `${searchType.charAt(0).toUpperCase() + searchType.slice(1)} added!` } }));
+        // Update the add status to indicate success
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'added', 
+            message: `${type.charAt(0).toUpperCase() + type.slice(1)} added!` 
+          } 
+        }));
       } else {
-        throw new Error(response.data.message || `Failed to add ${searchType}`);
+        throw new Error(response.data.message || `Failed to add ${type}`);
       }
     } catch (err) {
-      console.error(`Error adding ${searchType}:`, err);
-      setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'error', message: err.message || `Error adding ${searchType}` } }));
+      console.error(`Error adding ${type}:`, err);
+      
+      // Check if this is a duplicate error from the backend
+      if (err.response && err.response.status === 409) {
+        // Use the specific message from the backend
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: err.response.data.message || 'This item is already in your inventory'
+          } 
+        }));
+      } else if (err.response && err.response.status === 401) {
+        // Authentication error
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: 'Please log in to add items to your list'
+          } 
+        }));
+      } else {
+        // Handle other types of errors
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: err.message || `Error adding ${type}` 
+          } 
+        }));
+      }
+      
+      // Clear the error message after a timeout
       setTimeout(() => {
         setAddStatus(prev => ({ ...prev, [mal_id]: undefined }));
       }, 3000);
     }
   };
-
 
   return (
     <> {/* Use a Fragment to wrap multiple elements */}
@@ -106,63 +322,145 @@ const ExplorePage = () => {
         <h1>Explore Anime & Manga</h1>
         <form onSubmit={handleSearch} className="search-form">
           <div className="search-controls">
-          <input
-            type="text"
-            placeholder={`Search for ${searchType}...`}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="search-input"
-          />
-          <select
-            value={searchType}
-            onChange={(e) => setSearchType(e.target.value)}
-            className="search-type-select"
-          >
-            <option value="anime">Anime</option>
-            <option value="manga">Manga</option>
-          </select>
-          <button type="submit" disabled={loading} className="search-button">
-            {loading ? 'Searching...' : 'Search'}
-          </button>
-        </div>
-      </form>
-
-      {error && <p className="error-message">{error}</p>}
-
-      <div className="results-grid">
-        {results.length > 0 ? (
-          results.map((item) => (
-            <div key={item.mal_id} className="result-card">
-              <a href={item.url} target="_blank" rel="noopener noreferrer">
-                <img src={item.images?.jpg?.image_url} alt={item.title} />
-                <h3>{item.title}</h3>
-                {item.score && <p>Score: {item.score}</p>}
-                {item.episodes && <p>Episodes: {item.episodes}</p>}
-                {item.chapters && <p>Chapters: {item.chapters}</p>}
-              </a>
-              {/* Add button only if it's an anime search result */}
-              {/* Button to add item to inventory, works for both anime and manga */}
-              <button
-                className={`add-inventory-button ${addStatus[item.mal_id]?.status || ''}`}
-                onClick={() => handleAddItemToInventory(item)}
-                disabled={addStatus[item.mal_id]?.status === 'adding' || addStatus[item.mal_id]?.status === 'added'}
-              >
-                {addStatus[item.mal_id]?.status === 'adding' ? `Adding ${searchType}...` :
-                 addStatus[item.mal_id]?.status === 'added' ? `${searchType.charAt(0).toUpperCase() + searchType.slice(1)} Added ✓` :
-                 addStatus[item.mal_id]?.status === 'error' ? 'Error' :
-                 `Add ${searchType.charAt(0).toUpperCase() + searchType.slice(1)} to Inventory`}
-              </button>
-               {addStatus[item.mal_id]?.status === 'error' && (
-                 <p className="add-error-message">{addStatus[item.mal_id]?.message}</p>
-               )}
+            <div className="search-input-wrapper" ref={searchWrapperRef}>
+              <input
+                type="text"
+                placeholder={`Search for ${searchType}...`}
+                value={searchTerm}
+                onChange={(e) => {
+                  setSearchTerm(e.target.value);
+                  if (e.target.value.trim()) {
+                    setShowSuggestions(true); // Show suggestions when user types
+                  } else {
+                    setShowSuggestions(false); // Hide if input is cleared
+                  }
+                }}
+                onFocus={() => {
+                  // Show suggestions on focus if there's text and (either suggestions exist or loading is not for main search)
+                  if (searchTerm.trim() && (suggestions.length > 0 || !loading)) {
+                     setShowSuggestions(true);
+                  } else if (searchTerm.trim()) {
+                    // If there's a search term but no suggestions yet (e.g., after a full search cleared them, or initial focus),
+                    // still set to true to allow the debounced effect to fetch them if applicable.
+                    setShowSuggestions(true);
+                  }
+                }}
+                className="search-input"
+                autoComplete="off" // Disable browser's default autocomplete
+              />
+              {/* Suggestions Dropdown */}
+              {showSuggestions && searchTerm.trim() && !loading && (
+                <ul className="suggestions-list">
+                  {loadingSuggestions && <li className="suggestion-item-loading">Loading...</li>}
+                  {!loadingSuggestions && suggestions.length > 0 && suggestions.map((suggestion) => (
+                    <li
+                      key={suggestion.mal_id}
+                      className="suggestion-item"
+                      // Using onMouseDown to ensure click registers before input blur hides list
+                      onMouseDown={() => handleSuggestionClick(suggestion)}
+                    >
+                      {suggestion.images?.jpg?.small_image_url && (
+                        <img
+                          src={suggestion.images.jpg.small_image_url}
+                          alt={suggestion.title_english && suggestion.title_english !== suggestion.title ? `${suggestion.title} / ${suggestion.title_english}` : suggestion.title}
+                          className="suggestion-thumbnail"
+                        />
+                      )}
+                      <span>
+                        {suggestion.title}
+                        {suggestion.title_english && suggestion.title_english !== suggestion.title && ` / ${suggestion.title_english}`}
+                      </span>
+                    </li>
+                  ))}
+                  {/* Show "No suggestions found" only if not loading suggestions, suggestions array is empty, and there is a search term */}
+                  {!loadingSuggestions && suggestions.length === 0 && searchTerm.trim() && (
+                     <li className="suggestion-item-none">No suggestions found.</li>
+                  )}
+                </ul>
+              )}
             </div>
-          ))
+            <select
+              value={searchType}
+              onChange={(e) => setSearchType(e.target.value)} // Update search type on selection change
+              className="search-type-select"
+            >
+              <option value="anime">Anime</option>
+              <option value="manga">Manga</option>
+            </select>
+            <button type="submit" disabled={loading} className="search-button">
+              {loading ? 'Searching...' : 'Search'} {/* Show loading text if searching */}
+            </button>
+          </div>
+        </form>
+
+        {error && <p className="error-message">{error}</p>} {/* Display error message if any */}
+
+        {/* Display search results if available */}
+        {results.length > 0 ? (
+          <div className="search-results-section">
+            <h2>Search Results</h2>
+            <div className="results-grid">
+              {results.map((item) => (
+                <ExplorePageCard
+                  key={item.mal_id}
+                  item={item}
+                  type={searchType}
+                  addStatus={addStatus}
+                  handleAddItemToInventory={handleAddItemToInventory}
+                />
+              ))}
+            </div>
+          </div>
         ) : (
-          !loading && searchTerm && <p>No results found for "{searchTerm}".</p>
+          !loading && searchTerm && <p>No results found for "{searchTerm}".</p> // Show message if no results found
+        )}
+
+        {/* If no search has been performed, show top anime and manga */}
+        {!searchTerm && (
+          <>
+            {/* Top Anime Section */}
+            <div className="top-section">
+              <h2>Top 25 Anime - Voted by Community</h2>
+              {loadingTop.anime ? (
+                <p>Loading top anime...</p>
+              ) : (
+                <div className="results-grid">
+                  {topAnime.map(anime => (
+                    <ExplorePageCard
+                      key={anime.mal_id}
+                      item={anime}
+                      type="anime"
+                      addStatus={addStatus}
+                      handleAddItemToInventory={handleAddItemToInventory}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Top Manga Section */}
+            <div className="top-section">
+              <h2>Top 25 Manga - Voted by Community</h2>
+              {loadingTop.manga ? (
+                <p>Loading top manga...</p>
+              ) : (
+                <div className="results-grid">
+                  {topManga.map(manga => (
+                    <ExplorePageCard
+                      key={manga.mal_id}
+                      item={manga}
+                      type="manga"
+                      addStatus={addStatus}
+                      handleAddItemToInventory={handleAddItemToInventory}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
-    </div>
-  </>
+    </>
   );
 };
 

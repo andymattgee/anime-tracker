@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
+    // Call the logout function from AuthContext
+    logout();
+    // Close the menu
+    setIsMenuOpen(false);
+    // Navigate to the landing page
     navigate('/');
   };
 
@@ -17,7 +23,8 @@ const Navbar = () => {
       </div>
       
       <div className="navbar-links">
-        <Link to="/inventory" className="nav-link">Inventory</Link>
+        <Link to="/my-anime" className="nav-link">My Anime</Link>
+        <Link to="/my-manga" className="nav-link">My Manga</Link>
         <Link to="/explore" className="nav-link">Explore</Link>
       </div>
 

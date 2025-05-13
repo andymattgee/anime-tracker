@@ -160,3 +160,131 @@
   margin-bottom: 10px;
   text-align: center;
 }
+
+/* Top section styling */
+.top-section {
+  margin-top: 30px;
+  margin-bottom: 40px;
+  padding-bottom: 25px;
+  border-bottom: 1px solid #eee;
+}
+
+.top-section h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #333;
+  position: relative;
+  padding-left: 15px;
+}
+
+.top-section h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background-color: #007bff;
+  border-radius: 2px;
+}
+
+.search-results-section {
+  margin-bottom: 40px;
+}
+
+.search-results-section h2 {
+  margin-bottom: 20px;
+  font-size: 1.8rem;
+  color: #333;
+  position: relative;
+  padding-left: 15px;
+}
+
+.search-results-section h2::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 5px;
+  background-color: #28a745;
+  border-radius: 2px;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .results-grid {
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  }
+  
+  .result-card img {
+    height: 200px;
+  }
+  
+  .top-section h2,
+  .search-results-section h2 {
+    font-size: 1.5rem;
+  }
+}
+/* Styles for Predictive Search Suggestions */
+.search-input-wrapper {
+  position: relative; /* For absolute positioning of suggestions-list */
+  flex-grow: 1; /* Takes available space in flex container */
+  display: flex; /* To make input 100% width of wrapper */
+}
+
+.search-input-wrapper .search-input {
+  width: 100%; /* Input takes full width of wrapper */
+}
+
+.suggestions-list {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  position: absolute;
+  top: 100%; /* Position below the input */
+  left: 0;
+  right: 0; /* Make it same width as wrapper/input */
+  background-color: #fff; /* White background */
+  border: 1px solid #ccc; /* Light grey border */
+  border-top: none;
+  z-index: 1000; /* Ensure it's above other content */
+  max-height: 300px; /* Limit height and allow scrolling */
+  overflow-y: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Subtle shadow for depth */
+  border-radius: 0 0 4px 4px; /* Rounded bottom corners */
+}
+
+.suggestion-item,
+.suggestion-item-loading,
+.suggestion-item-none {
+  padding: 10px 15px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #eee; /* Separator line */
+  font-size: 0.9rem;
+}
+
+.suggestion-item:last-child {
+  border-bottom: none; /* No border for the last item */
+}
+
+.suggestion-item:hover {
+  background-color: #f0f0f0; /* Light grey background on hover */
+}
+
+.suggestion-thumbnail {
+  width: 40px; /* Fixed width for thumbnail */
+  height: 60px; /* Fixed height for thumbnail, maintaining aspect ratio */
+  object-fit: cover; /* Cover the area, cropping if necessary */
+  margin-right: 10px; /* Space between thumbnail and text */
+  border-radius: 3px; /* Slightly rounded corners for thumbnail */
+  border: 1px solid #ddd;
+}
+
+.suggestion-item-loading,
+.suggestion-item-none {
+  color: #777; /* Grey text for loading/no results message */
+  cursor: default;
+}

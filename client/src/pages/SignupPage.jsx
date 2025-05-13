@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const SignupPage = () => {
   const [formData, setFormData] = useState({
@@ -8,7 +9,16 @@ const SignupPage = () => {
     password: '',
     confirmPassword: ''
   });
+  const [error, setError] = useState('');
   const navigate = useNavigate();
+  const { register, loading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    // Redirect if already logged in
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -17,17 +27,36 @@ const SignupPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement signup logic
-    console.log('Signup attempt:', formData);
-    // For now, just redirect to login
-    navigate('/login');
+    setError(''); // Clear previous errors
+  
+    if (formData.password !== formData.confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long.");
+      return;
+    }
+  
+    const result = await register({
+      username: formData.username,
+      email: formData.email,
+      password: formData.password,
+    });
+    
+    if (result.success) {
+      navigate('/dashboard');
+    } else {
+      setError(result.message || 'Signup failed. Please try again.');
+    }
   };
 
   return (
     <div className="signup-page">
       <h1>Sign Up</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="username">Username:</label>
@@ -73,7 +102,9 @@ const SignupPage = () => {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary">Sign Up</button>
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Signing Up...' : 'Sign Up'}
+        </button>
       </form>
       <p>
         Already have an account? <Link to="/login">Login here</Link>
