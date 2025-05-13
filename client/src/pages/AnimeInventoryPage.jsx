@@ -4,9 +4,11 @@ import Navbar from '../components/Navbar';
 import MediaCard from '../components/MediaCard'; // Import MediaCard
 import DetailsModal from '../components/DetailsModal'; // Import DetailsModal
 import './InventoryPage.css'; // We can reuse the same CSS for now
+import { useAuth } from '../context/AuthContext';
 
 const AnimeInventoryPage = () => {
   const navigate = useNavigate();
+  const { token, isAuthenticated } = useAuth();
   const [animeList, setAnimeList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,18 +24,26 @@ const AnimeInventoryPage = () => {
   // });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5001/api/anime');
+      const response = await fetch('http://localhost:5001/api/anime', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch anime data: ${response.statusText}`);
       }
+      
       const result = await response.json();
 
       if (result.success) {
@@ -75,6 +85,9 @@ const AnimeInventoryPage = () => {
       try {
         const response = await fetch(`http://localhost:5001/api/anime/${id}`, {
           method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
         const result = await response.json();
         if (result.success) {
@@ -122,6 +135,7 @@ const AnimeInventoryPage = () => {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ ids: idsToDelete }),
         });
@@ -151,6 +165,7 @@ const AnimeInventoryPage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updatedData), // Send data from DetailsModal's form
       });

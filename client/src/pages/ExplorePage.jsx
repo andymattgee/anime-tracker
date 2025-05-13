@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
-  import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
+import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
 import './ExplorePage.css'; // Import the CSS file
+import { useAuth } from '../context/AuthContext'; // Import auth context
 
 const ExplorePage = () => {
   // State variables for managing search functionality
@@ -12,6 +13,7 @@ const ExplorePage = () => {
   const [loading, setLoading] = useState(false); // Loading state for the search
   const [error, setError] = useState(null); // Error state for handling API errors
   const [addStatus, setAddStatus] = useState({}); // Status of adding items to inventory
+  const { token, isAuthenticated } = useAuth(); // Get token from auth context
 
   // State for predictive search suggestions
   const [suggestions, setSuggestions] = useState([]);
@@ -195,6 +197,24 @@ const ExplorePage = () => {
 
   // Function to handle adding an item (anime or manga) to the inventory
   const handleAddItemToInventory = async (itemData, type = searchType) => {
+    // Check if user is authenticated
+    if (!isAuthenticated) {
+      setAddStatus(prev => ({ 
+        ...prev, 
+        [itemData.mal_id]: { 
+          status: 'error', 
+          message: 'Please log in to add items to your list' 
+        } 
+      }));
+      
+      // Clear the error message after a timeout
+      setTimeout(() => {
+        setAddStatus(prev => ({ ...prev, [itemData.mal_id]: undefined }));
+      }, 3000);
+      
+      return;
+    }
+    
     const mal_id = itemData.mal_id;
     setAddStatus(prev => ({ ...prev, [mal_id]: { status: 'adding' } }));
 
@@ -235,8 +255,13 @@ const ExplorePage = () => {
     }
 
     try {
-      // Send a POST request to add the item to the inventory
-      const response = await axios.post(endpoint, payload);
+      // Send a POST request to add the item to the inventory with the auth token
+      const response = await axios.post(endpoint, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (response.data.success) {
         // Update the add status to indicate success
@@ -261,6 +286,15 @@ const ExplorePage = () => {
           [mal_id]: { 
             status: 'error', 
             message: err.response.data.message || 'This item is already in your inventory'
+          } 
+        }));
+      } else if (err.response && err.response.status === 401) {
+        // Authentication error
+        setAddStatus(prev => ({ 
+          ...prev, 
+          [mal_id]: { 
+            status: 'error', 
+            message: 'Please log in to add items to your list'
           } 
         }));
       } else {

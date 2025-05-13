@@ -1,12 +1,40 @@
-import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: '',
     password: ''
   });
+  const [error, setError] = useState('');
+  const [initialMount, setInitialMount] = useState(true);
   const navigate = useNavigate();
+  const location = useLocation();
+  const { login, logout, loading, isAuthenticated } = useAuth();
+
+  useEffect(() => {
+    // Only perform logout on the initial mount
+    if (initialMount) {
+      logout();
+      setInitialMount(false);
+    }
+    
+    // Display message from signup if exists
+    if (location.state?.message) {
+      // Display this message to the user
+      setError(location.state.message);
+      // Clear the message from location state
+      navigate(location.pathname, { replace: true, state: {} });
+    }
+  }, [initialMount, logout, location, navigate]);
+
+  // Handle redirection after successful login
+  useEffect(() => {
+    if (isAuthenticated && !loading && !initialMount) {
+      navigate('/dashboard');
+    }
+  }, [isAuthenticated, loading, initialMount, navigate]);
 
   const handleChange = (e) => {
     setFormData({
@@ -15,12 +43,20 @@ const LoginPage = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // TODO: Implement login logic
-    console.log('Login attempt:', formData);
-    // For now, just redirect to dashboard
-    navigate('/dashboard');
+    setError('');
+    
+    const result = await login({
+      email: formData.email,
+      password: formData.password,
+    });
+    
+    if (result.success) {
+      // The useEffect above will handle navigation once isAuthenticated is true
+    } else {
+      setError(result.message || 'Login failed. Please check your credentials.');
+    }
   };
 
   const handleSkipLogin = () => {
@@ -30,6 +66,7 @@ const LoginPage = () => {
   return (
     <div className="login-page">
       <h1>Login</h1>
+      {error && <p style={{ color: 'red' }}>{error}</p>}
       <form onSubmit={handleSubmit}>
         <div className="form-group">
           <label htmlFor="email">Email:</label>
@@ -53,7 +90,9 @@ const LoginPage = () => {
             required
           />
         </div>
-        <button type="submit" className="btn btn-primary">Login</button>
+        <button type="submit" className="btn btn-primary" disabled={loading}>
+          {loading ? 'Logging In...' : 'Login'}
+        </button>
       </form>
       <div className="login-options">
         <p>

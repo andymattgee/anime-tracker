@@ -1,12 +1,18 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const handleLogout = () => {
-    // TODO: Implement logout logic
+    // Call the logout function from AuthContext
+    logout();
+    // Close the menu
+    setIsMenuOpen(false);
+    // Navigate to the landing page
     navigate('/');
   };
 

@@ -4,9 +4,11 @@ import Navbar from '../components/Navbar';
 import MediaCard from '../components/MediaCard'; // Import MediaCard
 import DetailsModal from '../components/DetailsModal'; // Import DetailsModal
 import './InventoryPage.css'; // We can reuse the same CSS for now
+import { useAuth } from '../context/AuthContext';
 
 const MangaInventoryPage = () => {
   const navigate = useNavigate();
+  const { token, isAuthenticated } = useAuth();
   const [mangaList, setMangaList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -22,18 +24,26 @@ const MangaInventoryPage = () => {
   // });
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (isAuthenticated) {
+      fetchData();
+    }
+  }, [isAuthenticated]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await fetch('http://localhost:5001/api/manga');
+      const response = await fetch('http://localhost:5001/api/manga', {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      });
+      
       if (!response.ok) {
         throw new Error(`Failed to fetch manga data: ${response.statusText}`);
       }
+      
       const result = await response.json();
 
       if (result.success) {
@@ -79,6 +89,9 @@ const MangaInventoryPage = () => {
       try {
         const response = await fetch(`http://localhost:5001/api/manga/${id}`, {
           method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${token}`
+          }
         });
         const result = await response.json();
         if (result.success) {
@@ -126,6 +139,7 @@ const MangaInventoryPage = () => {
           method: 'DELETE',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({ ids: idsToDelete }),
         });
@@ -152,6 +166,7 @@ const MangaInventoryPage = () => {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(updatedData),
       });

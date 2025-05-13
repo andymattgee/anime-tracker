@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Import axios
+import { useAuth } from '../context/AuthContext'; // Import auth context
 
 const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRecommendationAdded }) => {
   const [isEditing, setIsEditing] = useState(false);
@@ -8,6 +9,7 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRe
   const [loadingRecommendations, setLoadingRecommendations] = useState(false);
   const [recommendationsError, setRecommendationsError] = useState(null);
   const [recommendationAddStatus, setRecommendationAddStatus] = useState({}); // Tracks add status for each recommendation
+  const { token } = useAuth(); // Get auth token
 
   useEffect(() => {
     if (item) {
@@ -101,7 +103,13 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRe
         };
       }
 
-      const addResponse = await axios.post(endpoint, payload);
+      // Include authorization token in the request
+      const addResponse = await axios.post(endpoint, payload, {
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        }
+      });
 
       if (addResponse.data.success) {
         setRecommendationAddStatus(prev => ({
@@ -120,6 +128,7 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRe
       if (err.response) {
         if (err.response.status === 409) message = 'Already in inventory.';
         else if (err.response.status === 429) message = 'API rate limit. Try later.';
+        else if (err.response.status === 401) message = 'Please login to add items.';
         else if (err.response.data && err.response.data.message) message = err.response.data.message;
       } else if (err.message) {
         message = err.message;
