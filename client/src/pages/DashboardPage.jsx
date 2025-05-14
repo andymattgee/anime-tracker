@@ -10,7 +10,7 @@ const DashboardPage = () => {
     <div className="dashboard-page">
       <Navbar />
       <div className="dashboard-content">
-        <div className="user-welcome">
+        <div className="user-welcome" style={{ width: '100%', marginBottom: '2rem' }}>
           <UserInfo />
         </div>
         <section className="app-description-section" style={{ marginBottom: '2rem', padding: '1rem', backgroundColor: '#e9ecef', borderRadius: '4px' }}>

@@ -3,6 +3,8 @@ import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
 import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
 import DetailsModal from '../components/DetailsModal'; // Import DetailsModal
+import GenreList from '../components/GenreList'; // Import GenreList
+import '../components/GenreList.css'; // Import GenreList CSS
 import './ExplorePage.css'; // Import the CSS file
 import { useAuth } from '../context/AuthContext'; // Import auth context
 
@@ -457,6 +459,9 @@ const ExplorePage = () => {
         </form>
 
         {error && <p className="error-message">{error}</p>} {/* Display error message if any */}
+
+        {/* Render GenreList only if no search term is active and not loading results */}
+        {!searchTerm && !loading && <GenreList />}
 
         {/* Display search results if available */}
         {results.length > 0 ? (

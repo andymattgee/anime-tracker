@@ -15,13 +15,11 @@ const UserInfo = () => {
     <div className="user-info">
       {user ? (
         <div>
-          <p>Welcome, {user.username}!</p>
-          <button onClick={handleLogout} className="btn btn-danger">
-            Logout
-          </button>
+          <p style={{ fontSize: '2em', fontWeight: 'bold', textAlign: 'center' }}>Welcome, {user.username}!</p>
+          {/* Logout button removed */}
         </div>
       ) : (
-        <p>Not logged in</p>
+        <p style={{ fontSize: '2em', fontWeight: 'bold', textAlign: 'center' }}>Not logged in</p>
       )}
     </div>
   );
