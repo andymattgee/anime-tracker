@@ -2,7 +2,7 @@
 
 Anime & Manga Tracker is a full-stack MERN application designed to help users discover, track, and manage their favorite anime and manga series. Users can search for titles using the Jikan API (which sources data from MyAnimeList) and save them to a personalized inventory. The application features separate views for exploring new media and managing saved entries.
 
-## ✨ Features
+##  Features
 
 *   **Search & Discover:** Explore a vast library of anime and manga titles using the Jikan API.
 *   **Personalized Inventory:** Save anime and manga entries to your personal list.
@@ -14,7 +14,7 @@ Anime & Manga Tracker is a full-stack MERN application designed to help users di
 *   **Secure Configuration:** MongoDB URI managed securely via a `.env` file.
 *   **(Planned) JWT Authentication:** User authentication and authorization will be implemented using JSON Web Tokens.
 
-## 🛠️ Tech Stack
+##  Tech Stack
 
 *   **Frontend:**
     *   React (Manually configured with Webpack and Babel, no Create React App)
@@ -34,7 +34,7 @@ Anime & Manga Tracker is a full-stack MERN application designed to help users di
     *   Nodemon
     *   Concurrently
 
-## 🚀 Getting Started
+##  Getting Started
 
 Follow these instructions to get a local copy of the project up and running.
 
@@ -106,7 +106,7 @@ You can run the frontend and backend servers separately or concurrently.
     ```
     This command will start both the backend and frontend servers simultaneously. (Ensure your root `package.json` has a script like: `"dev": "concurrently \"npm run dev --prefix server\" \"npm run start --prefix client\""`)
 
-## 🎯 Learning Objectives / Developer Goals
+##  Learning Objectives / Developer Goals
 
 The primary goal of this project is to reinforce and solidify MERN stack knowledge by:
 
@@ -120,25 +120,23 @@ The primary goal of this project is to reinforce and solidify MERN stack knowled
 *   Practicing modern JavaScript (ES6+) features.
 *   Styling with Vanilla CSS for a deeper understanding of CSS fundamentals.
 
-## 📸 Screenshots (Optional)
+##  Screenshots (Optional)
 
 ![Screenshot 2025-05-14 at 9 12 59 PM](https://github.com/user-attachments/assets/4f679f28-251b-4a02-9777-ae0d8360e781)
 ![Screenshot 2025-05-14 at 9 13 47 PM](https://github.com/user-attachments/assets/5fe5c869-1637-4a3f-abc6-6927006ebf84)
 ![Screenshot 2025-05-14 at 9 12 48 PM](https://github.com/user-attachments/assets/98072916-9e46-408d-8dd4-97a2b92719ec)
+![Screenshot 2025-05-14 at 9 21 16 PM](https://github.com/user-attachments/assets/984004bd-e788-4afd-874a-a88a43c62848)
+![Screenshot 2025-05-14 at 9 21 28 PM](https://github.com/user-attachments/assets/28a5c1f3-dafc-4848-a246-cc0654f41033)
 
 
 
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE.md](LICENSE.md) file for details (if you add one).
-*(If you don't have a LICENSE.md, you can state: Distributed under the MIT License.)*
 
-## 🙏 Acknowledgements
+
+##  Acknowledgements
 
 *   **Jikan API:** For providing free access to MyAnimeList data.
 *   **MyAnimeList:** As the underlying source of the anime and manga data.
 
-
----
-
-Happy Coding!
