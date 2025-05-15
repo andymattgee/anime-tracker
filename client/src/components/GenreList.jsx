@@ -20,13 +20,13 @@ const genres = [
   { id: 36, name: 'Slice of Life' },
   { id: 30, name: 'Sports' },
   { id: 37, name: 'Supernatural' },
-  { id: 41, name: 'Suspense' }, // Jikan ID 41 is Thriller
+  { id: 41, name: 'Suspense' }, 
 ];
 
 const GenreList = () => {
   return (
     <div className="genre-list-section">
-      <h2>Browse by Genre</h2>
+      <h2>Browse by Genre - Top 50 Anime (Top 50 Manga Coming Soon)</h2>
       <div className="genre-grid">
         {genres.map(genre => (
           <Link
