@@ -2,7 +2,18 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Import axios
 import { useAuth } from '../context/AuthContext'; // Import auth context
 
-const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRecommendationAdded }) => {
+const DetailsModal = ({
+  isOpen,
+  onClose,
+  item,
+  onSave,
+  onDelete,
+  mediaType,
+  onRecommendationAdded,
+  onAddItem, // New prop for adding the item from the modal
+  itemAddStatus, // New prop for the add status of the current item
+  showAddButton // New prop to control visibility of the add button
+}) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState({});
   const [recommendations, setRecommendations] = useState([]);
@@ -396,21 +407,40 @@ const DetailsModal = ({ isOpen, onClose, item, onSave, onDelete, mediaType, onRe
         </div>
         
         <div className="modal-actions">
-          {!isEditing && onDelete &&
+          {!isEditing && onDelete && (
             <button
               type="button"
               className="btn btn-danger"
               onClick={() => {
-                onClose(); 
+                onClose();
                 onDelete(item.id);
               }}
             >
               Delete
             </button>
-          }
-          {!isEditing &&
+          )}
+          {!isEditing && showAddButton && onAddItem && item && (
+            <button
+              type="button"
+              className={`btn ${itemAddStatus?.status === 'added' ? 'btn-success' : itemAddStatus?.status === 'error' ? 'btn-danger' : 'btn-primary'}`}
+              onClick={() => onAddItem(item, mediaType)}
+              disabled={itemAddStatus?.status === 'adding' || itemAddStatus?.status === 'added'}
+              style={{ marginRight: '10px' }} // Add some spacing
+            >
+              {itemAddStatus?.status === 'adding' ? `Adding ${mediaType}...` :
+               itemAddStatus?.status === 'added' ? `${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} Added ✓` :
+               itemAddStatus?.status === 'error' ? 'Error Adding' :
+               `Add to ${mediaType.charAt(0).toUpperCase() + mediaType.slice(1)} Inventory`}
+            </button>
+          )}
+          {itemAddStatus?.status === 'error' && itemAddStatus?.message && showAddButton && (
+             <p className="add-error-message" style={{color: 'red', fontSize: '0.8em', marginLeft: '10px', display: 'inline-block'}}>
+                {itemAddStatus.message}
+             </p>
+          )}
+          {!isEditing && (
             <button type="button" className="btn btn-secondary" onClick={onClose}>Close</button>
-          }
+          )}
           {/* Save/Cancel for editing are now inline */}
         </div>
       </div>

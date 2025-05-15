@@ -1,0 +1,42 @@
+.genre-list-section {
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa; /* Light background for the section */
+  border-radius: 4px;
+}
+
+.genre-list-section h2 {
+  margin-bottom: 1rem;
+  font-size: 1.5rem;
+  color: #343a40; /* Darker heading color */
+  text-align: center;
+}
+
+.genre-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); /* Responsive grid */
+  gap: 0.75rem; /* Spacing between genre links */
+}
+
+.genre-link {
+  display: block;
+  padding: 0.75rem 1rem;
+  background-color: #007bff; /* Primary button color */
+  color: white;
+  text-decoration: none;
+  border-radius: 4px;
+  text-align: center;
+  font-weight: 500;
+  transition: background-color 0.2s ease-in-out, transform 0.1s ease;
+}
+
+.genre-link:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+  color: white;
+  text-decoration: none;
+  transform: translateY(-2px); /* Slight lift on hover */
+}
+
+.genre-link:active {
+  transform: translateY(0); /* Reset lift on click */
+}

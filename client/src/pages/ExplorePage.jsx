@@ -2,6 +2,9 @@ import React, { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import Navbar from '../components/Navbar'; // Import the Navbar component
 import ExplorePageCard from '../components/ExplorePageCard'; // Import the InventoryPageCard component
+import DetailsModal from '../components/DetailsModal'; // Import DetailsModal
+import GenreList from '../components/GenreList'; // Import GenreList
+import '../components/GenreList.css'; // Import GenreList CSS
 import './ExplorePage.css'; // Import the CSS file
 import { useAuth } from '../context/AuthContext'; // Import auth context
 
@@ -14,6 +17,10 @@ const ExplorePage = () => {
   const [error, setError] = useState(null); // Error state for handling API errors
   const [addStatus, setAddStatus] = useState({}); // Status of adding items to inventory
   const { token, isAuthenticated } = useAuth(); // Get token from auth context
+
+  // State for DetailsModal
+  const [viewingDetailsItem, setViewingDetailsItem] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // State for predictive search suggestions
   const [suggestions, setSuggestions] = useState([]);
@@ -315,6 +322,64 @@ const ExplorePage = () => {
     }
   };
 
+  // Handlers for DetailsModal
+  const handleCardClick = (item, itemType) => {
+    // The item from ExplorePageCard is directly from Jikan API
+    // We need to map it to the structure expected by DetailsModal if it's different
+    // For now, let's assume DetailsModal can handle the Jikan item structure
+    // or that we will adjust DetailsModal or this mapping later if needed.
+    // A key difference is that inventory items have an `id` (MongoDB _id),
+    // while Jikan items have `mal_id`. DetailsModal uses `item.id` for onSave/onDelete.
+    // For ExplorePage, onSave/onDelete are not directly applicable in the same way
+    // as they are for inventory items. We might not pass onSave/onDelete or pass stubs.
+
+    // Map Jikan item to a structure DetailsModal might expect for display
+    // This mapping is basic and might need adjustment based on DetailsModal's exact needs
+    // and what data is available from the Jikan 'item' object.
+    const modalItem = {
+      ...item,
+      // Jikan specific fields that DetailsModal might use or we can map
+      coverImage: item.images?.jpg?.image_url,
+      // title_english: item.title_english, // already there
+      // title: item.title, // already there
+      synopsis: item.synopsis,
+      apiStatus: item.status, // Jikan 'status' (e.g., "Finished Airing")
+      apiScore: item.score,
+      source: item.source,
+      genres: item.genres?.map(g => g.name),
+      airedFrom: itemType === 'anime' ? item.aired?.from : item.published?.from,
+      airedTo: itemType === 'anime' ? item.aired?.to : item.published?.to,
+      trailerUrl: itemType === 'anime' ? item.trailer?.url : null,
+      // Fields DetailsModal expects for user tracking (will be empty/default for explore items)
+      userStatus: '',
+      episodesWatched: '',
+      chaptersRead: '',
+      userScore: '',
+      userNotes: '',
+      progress: itemType === 'anime' ? `Eps: ${item.episodes || '?'}` : `Ch: ${item.chapters || '?'}`,
+      // mal_id is already present in item
+      itemType: itemType // explicitly pass itemType to modalItem
+    };
+    setViewingDetailsItem(modalItem);
+    setIsModalOpen(true);
+  };
+
+  const handleCloseModal = () => {
+    setIsModalOpen(false);
+    setViewingDetailsItem(null);
+  };
+
+  // This function might be needed if DetailsModal's "Add to Inventory" for recommendations
+  // needs to refresh something on the ExplorePage, though typically it would refresh an inventory page.
+  // For now, a stub or a function that refetches top items if a recommendation was added from there.
+  const handleRecommendationAdded = () => {
+    // Potentially refetch top anime/manga if the modal was opened from those sections
+    // Or, more simply, do nothing specific on ExplorePage for now, as the primary
+    // action of adding to inventory happens and the user would see it in their inventory.
+    console.log("Recommendation added, ExplorePage notified.");
+  };
+
+
   return (
     <> {/* Use a Fragment to wrap multiple elements */}
       <Navbar /> {/* Render the Navbar */}
@@ -395,6 +460,9 @@ const ExplorePage = () => {
 
         {error && <p className="error-message">{error}</p>} {/* Display error message if any */}
 
+        {/* Render GenreList only if no search term is active and not loading results */}
+        {!searchTerm && !loading && <GenreList />}
+
         {/* Display search results if available */}
         {results.length > 0 ? (
           <div className="search-results-section">
@@ -407,6 +475,7 @@ const ExplorePage = () => {
                   type={searchType}
                   addStatus={addStatus}
                   handleAddItemToInventory={handleAddItemToInventory}
+                  onCardClick={handleCardClick} // Pass the click handler
                 />
               ))}
             </div>
@@ -432,6 +501,7 @@ const ExplorePage = () => {
                       type="anime"
                       addStatus={addStatus}
                       handleAddItemToInventory={handleAddItemToInventory}
+                      onCardClick={handleCardClick} // Pass the click handler
                     />
                   ))}
                 </div>
@@ -452,12 +522,30 @@ const ExplorePage = () => {
                       type="manga"
                       addStatus={addStatus}
                       handleAddItemToInventory={handleAddItemToInventory}
+                      onCardClick={handleCardClick} // Pass the click handler
                     />
                   ))}
                 </div>
               )}
             </div>
           </>
+        )}
+
+        {isModalOpen && viewingDetailsItem && (
+          <DetailsModal
+            isOpen={isModalOpen}
+            onClose={handleCloseModal}
+            item={viewingDetailsItem}
+            mediaType={viewingDetailsItem.itemType} // Use the itemType from the clicked card
+            // onSave, onDelete are not applicable here as these items are not in user's inventory yet
+            // onSave={() => {}} // Placeholder or remove if not needed
+            // onDelete={() => {}} // Placeholder or remove if not needed
+            onRecommendationAdded={handleRecommendationAdded} // Handle if a recommended item is added
+            // Props for the new "Add to Inventory" button from within the modal
+            onAddItem={handleAddItemToInventory}
+            itemAddStatus={addStatus[viewingDetailsItem?.mal_id]}
+            showAddButton={true}
+          />
         )}
       </div>
     </>

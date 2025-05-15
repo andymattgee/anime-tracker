@@ -8,6 +8,8 @@ import DashboardPage from './pages/DashboardPage';
 import AnimeInventoryPage from './pages/AnimeInventoryPage';
 import MangaInventoryPage from './pages/MangaInventoryPage';
 import ExplorePage from './pages/ExplorePage'; // Import the new Explore page
+import GenrePage from './pages/GenrePage'; // Import GenrePage
+import ProfilePage from './pages/ProfilePage'; // Import the new Profile page
 import { AuthProvider } from './context/AuthContext';
 import PrivateRoute from './components/PrivateRoute';
 
@@ -46,6 +48,15 @@ const App = () => {
               } 
             />
             <Route path="/explore" element={<ExplorePage />} /> {/* Add route for Explore page */}
+            <Route path="/genre/:genreName/:genreId" element={<GenrePage />} /> {/* Add route for Genre page */}
+            <Route 
+              path="/profile" 
+              element={
+                <PrivateRoute>
+                  <ProfilePage />
+                </PrivateRoute>
+              } 
+            /> {/* Add route for Profile page */}
           </Routes>
         </div>
       </Router>
